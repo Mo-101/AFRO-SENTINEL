@@ -325,6 +325,58 @@ export const API_SOURCES: ApiSource[] = [
     auth_type: 'None',
     data_format: 'RSS',
   },
+  
+  // NEW SOURCES - DHIS2 ALTERNATIVES (Tier 1)
+  {
+    source_id: 'WHO-DON',
+    source_name: 'WHO Disease Outbreak News',
+    status: 'active',
+    base_url: 'https://www.who.int/feeds/entity/csr/don/en/rss.xml',
+    source_type: 'Official RSS',
+    category: 'Official',
+    coverage: 'Global (Africa focus)',
+    priority: 1,
+    auth_type: 'None',
+    data_format: 'RSS',
+  },
+  {
+    source_id: 'OCHA-FTS',
+    source_name: 'OCHA Financial Tracking Service',
+    status: 'active',
+    base_url: 'https://api.hpc.tools/v1/public/fts/flow',
+    source_type: 'Official API',
+    category: 'Humanitarian',
+    coverage: 'Global (Africa focus)',
+    priority: 1,
+    auth_type: 'None',
+    data_format: 'JSON',
+  },
+  
+  // NEW SOURCES - SOCIAL MEDIA ALTERNATIVES (Tier 3)
+  {
+    source_id: 'REDDIT-AFRICA',
+    source_name: 'Reddit r/Africa',
+    status: 'active',
+    base_url: 'https://www.reddit.com/r/africa/search.json',
+    source_type: 'Community Forum',
+    category: 'Community',
+    coverage: 'Africa',
+    priority: 3,
+    auth_type: 'None',
+    data_format: 'JSON',
+  },
+  {
+    source_id: 'MASTODON-HEALTH',
+    source_name: 'Mastodon Health Hashtags',
+    status: 'active',
+    base_url: 'https://mastodon.social/api/v1/timelines/tag/',
+    source_type: 'Social Media',
+    category: 'Community',
+    coverage: 'Global (Africa filter)',
+    priority: 3,
+    auth_type: 'None',
+    data_format: 'JSON',
+  },
 ];
 
 // Mapbox token (publishable - safe for client-side)

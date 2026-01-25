@@ -464,6 +464,52 @@ function extractCountryISO3(text: string): string | null {
 // =====================================================
 
 // Detect language from text patterns
+// Country to expected languages mapping (for validation)
+const COUNTRY_LANGUAGES: Record<string, string[]> = {
+  'TCD': ['fr', 'ar'],  // Chad - French/Arabic, NOT Spanish
+  'NGA': ['en', 'ha', 'yo', 'ig'],  // Nigeria
+  'NER': ['fr', 'ha'],  // Niger
+  'SEN': ['fr', 'wo'],  // Senegal
+  'GHA': ['en', 'tw'],  // Ghana
+  'KEN': ['en', 'sw'],  // Kenya
+  'TZA': ['sw', 'en'],  // Tanzania
+  'ETH': ['am', 'om', 'en'],  // Ethiopia
+  'ERI': ['ti', 'ar'],  // Eritrea
+  'DZA': ['ar', 'fr'],  // Algeria
+  'MAR': ['ar', 'fr'],  // Morocco
+  'TUN': ['ar', 'fr'],  // Tunisia
+  'LBY': ['ar'],  // Libya
+  'SDN': ['ar'],  // Sudan
+  'SSD': ['en', 'ar'],  // South Sudan
+  'COD': ['fr', 'ln', 'sw'],  // DRC
+  'COG': ['fr', 'ln'],  // Congo
+  'CMR': ['fr', 'en'],  // Cameroon
+  'CAF': ['fr'],  // Central African Republic
+  'AGO': ['pt'],  // Angola
+  'MOZ': ['pt'],  // Mozambique
+  'GNB': ['pt'],  // Guinea-Bissau
+  'CPV': ['pt'],  // Cape Verde
+  'STP': ['pt'],  // Sao Tome
+  'RWA': ['rw', 'fr', 'en'],  // Rwanda
+  'BDI': ['rw', 'fr'],  // Burundi
+  'UGA': ['en', 'sw'],  // Uganda
+  'ZAF': ['en', 'zu', 'xh'],  // South Africa
+  'ZWE': ['en', 'sn'],  // Zimbabwe
+  'ZMB': ['en'],  // Zambia
+  'MWI': ['en', 'ny'],  // Malawi
+  'MDG': ['mg', 'fr'],  // Madagascar
+  'MLI': ['fr', 'ff'],  // Mali
+  'BFA': ['fr'],  // Burkina Faso
+  'CIV': ['fr'],  // Ivory Coast
+  'TGO': ['fr'],  // Togo
+  'BEN': ['fr', 'yo'],  // Benin
+  'GIN': ['fr'],  // Guinea
+  'SLE': ['en'],  // Sierra Leone
+  'LBR': ['en'],  // Liberia
+  'GMB': ['en', 'wo'],  // Gambia
+  'MRT': ['ar', 'fr'],  // Mauritania
+};
+
 function detectLanguage(text: string): { code: string; confidence: number } {
   // Check for unique script characters first
   for (const [langCode, patterns] of Object.entries(LANGUAGE_PATTERNS)) {
@@ -505,6 +551,40 @@ function detectLanguage(text: string): { code: string; confidence: number } {
   }
   
   return { code: bestLang, confidence };
+}
+
+// Infer language from country when article language is wrong (e.g. Spanish for Chad)
+function inferLanguageFromCountry(
+  detectedLang: string,
+  countryISO3: string,
+  articleLang?: string
+): string {
+  const expectedLangs = COUNTRY_LANGUAGES[countryISO3] || ['en'];
+  
+  // If detected language matches expected, use it
+  if (expectedLangs.includes(detectedLang)) {
+    return detectedLang;
+  }
+  
+  // If article language matches expected, use it
+  if (articleLang && expectedLangs.includes(articleLang)) {
+    return articleLang;
+  }
+  
+  // If both detected and article are NOT expected for this country,
+  // use the first expected language (most likely lingua franca)
+  // This fixes: Chad getting "Spanish" from diariosur.es
+  if (articleLang && !expectedLangs.includes(articleLang) && !expectedLangs.includes(detectedLang)) {
+    console.log(`Language override: ${countryISO3} detected "${articleLang}" -> using "${expectedLangs[0]}"`);
+    return expectedLangs[0];
+  }
+  
+  // Default: use detected if African language, otherwise article, otherwise expected
+  if (['ha', 'yo', 'sw', 'am', 'ig', 'wo', 'ff', 'ar', 'fr', 'pt'].includes(detectedLang)) {
+    return detectedLang;
+  }
+  
+  return articleLang || expectedLangs[0] || 'en';
 }
 
 // Multilingual disease detection with keyword matching
@@ -671,7 +751,7 @@ async function fetchGDELT(): Promise<any[]> {
           source_type: 'news',
           source_tier: sourceTier,
           original_text: title,
-          original_language: langDetection.code !== 'en' ? langDetection.code : (article.language || 'en'),
+          original_language: inferLanguageFromCountry(langDetection.code, countryISO3, article.language),
           location_country: Object.entries(COUNTRY_NAME_TO_ISO3).find(([_, iso]) => iso === countryISO3)?.[0] || countryISO3,
           location_country_iso: countryISO3,
           location_lat: COUNTRY_COORDS[countryISO3]?.lat || null,
@@ -1842,6 +1922,281 @@ async function fetchHDX(): Promise<any[]> {
   return signals;
 }
 
+// =====================================================
+// NEW SOURCES - DHIS2 ALTERNATIVES & SOCIAL MEDIA
+// =====================================================
+
+// Fetch from WHO Disease Outbreak News (DON) - DHIS2 Alternative (Tier 1)
+async function fetchWHODON(): Promise<any[]> {
+  const signals: any[] = [];
+  
+  try {
+    // WHO DON RSS feed - official disease outbreak announcements
+    const url = 'https://www.who.int/feeds/entity/csr/don/en/rss.xml';
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'AFRO-Sentinel-Watchtower/1.0' }
+    });
+    
+    if (!response.ok) {
+      console.log('WHO DON failed:', response.status);
+      return signals;
+    }
+    
+    const xmlText = await response.text();
+    const items = xmlText.match(/<item>[\s\S]*?<\/item>/g) || [];
+    
+    for (const item of items.slice(0, 25)) {
+      const titleMatch = item.match(/<title>(?:<!\[CDATA\[)?([^\]<]+)(?:\]\]>)?<\/title>/);
+      const linkMatch = item.match(/<link>([^<]+)<\/link>/);
+      const dateMatch = item.match(/<pubDate>([^<]+)<\/pubDate>/);
+      const descMatch = item.match(/<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/);
+      
+      if (!titleMatch) continue;
+      
+      const title = titleMatch[1].replace(/&amp;/g, '&');
+      const description = descMatch?.[1]?.replace(/<[^>]+>/g, '') || '';
+      const fullText = `${title} ${description}`;
+      
+      // Extract country from title/description
+      const countryISO3 = extractCountryISO3(fullText);
+      if (!countryISO3 || !AFRO_COUNTRIES.includes(countryISO3)) continue;
+      
+      const multilingualDiseaseInfo = detectDiseaseMultilingual(fullText);
+      const diseaseInfo = multilingualDiseaseInfo || detectDisease(fullText);
+      
+      signals.push({
+        source_id: 'WHO_DON',
+        source_name: 'WHO Disease Outbreak News',
+        source_url: linkMatch?.[1] || 'https://www.who.int/emergencies/disease-outbreak-news',
+        source_type: 'official',
+        source_tier: 'tier_1',
+        original_text: title.substring(0, 500),
+        original_language: 'en',
+        location_country: Object.entries(COUNTRY_NAME_TO_ISO3).find(([_, iso]) => iso === countryISO3)?.[0] || countryISO3,
+        location_country_iso: countryISO3,
+        location_lat: COUNTRY_COORDS[countryISO3]?.lat || null,
+        location_lng: COUNTRY_COORDS[countryISO3]?.lng || null,
+        disease_name: diseaseInfo?.name || null,
+        disease_category: diseaseInfo?.category || 'unknown',
+        priority: diseaseInfo?.priority || 'P1',  // WHO DON = high priority
+        source_timestamp: dateMatch?.[1] ? new Date(dateMatch[1]).toISOString() : new Date().toISOString(),
+        confidence_score: 95,  // Official WHO source
+        signal_type: 'official_report',
+        status: 'new',
+        ingestion_source: 'WHO-DON-RSS',
+        duplicate_hash: generateHash(linkMatch?.[1] || title),
+      });
+    }
+  } catch (error) {
+    console.error('WHO DON error:', error);
+  }
+  
+  return signals;
+}
+
+// Fetch from OCHA Financial Tracking Service - Humanitarian health alerts (Tier 1)
+async function fetchOCHAFTS(): Promise<any[]> {
+  const signals: any[] = [];
+  
+  try {
+    // OCHA FTS API - health sector emergency funding (proxy for outbreaks)
+    const currentYear = new Date().getFullYear();
+    const url = `https://api.hpc.tools/v1/public/fts/flow?year=${currentYear}&sectorName=Health&locationTypes=country&limit=30`;
+    
+    const response = await fetch(url, {
+      headers: { 'Accept': 'application/json' }
+    });
+    
+    if (!response.ok) {
+      console.log('OCHA FTS failed:', response.status);
+      return signals;
+    }
+    
+    const data = await response.json();
+    const flows = data.data?.flows || [];
+    
+    for (const flow of flows) {
+      const description = flow.description || '';
+      const locations = flow.destinationObjects?.filter((o: any) => o.type === 'Location') || [];
+      
+      for (const loc of locations) {
+        const countryName = loc.name?.toLowerCase() || '';
+        const countryISO3 = COUNTRY_NAME_TO_ISO3[countryName] || extractCountryISO3(countryName);
+        
+        if (!countryISO3 || !AFRO_COUNTRIES.includes(countryISO3)) continue;
+        
+        const fullText = `${description} ${flow.flowType || ''} ${flow.keywords?.join(' ') || ''}`;
+        const diseaseInfo = detectDiseaseMultilingual(fullText) || detectDisease(fullText);
+        
+        // Only include health emergency funding (proxy for outbreak response)
+        const emergencyKeywords = ['outbreak', 'epidemic', 'emergency', 'cholera', 'ebola', 'measles', 'meningitis', 'malaria'];
+        const isEmergency = emergencyKeywords.some(kw => fullText.toLowerCase().includes(kw));
+        
+        if (!isEmergency) continue;
+        
+        signals.push({
+          source_id: 'OCHA_FTS',
+          source_name: 'OCHA Financial Tracking Service',
+          source_url: `https://fts.unocha.org/flows/${flow.id}`,
+          source_type: 'official',
+          source_tier: 'tier_1',
+          original_text: description.substring(0, 500) || `Health emergency funding for ${loc.name}`,
+          original_language: 'en',
+          location_country: loc.name || countryISO3,
+          location_country_iso: countryISO3,
+          location_lat: COUNTRY_COORDS[countryISO3]?.lat || null,
+          location_lng: COUNTRY_COORDS[countryISO3]?.lng || null,
+          disease_name: diseaseInfo?.name || null,
+          disease_category: diseaseInfo?.category || 'unknown',
+          priority: 'P2',
+          source_timestamp: flow.date || new Date().toISOString(),
+          confidence_score: 85,
+          signal_type: 'official_report',
+          status: 'new',
+          ingestion_source: 'OCHA-FTS-API',
+          duplicate_hash: generateHash(`${flow.id}-${countryISO3}`),
+        });
+      }
+    }
+  } catch (error) {
+    console.error('OCHA FTS error:', error);
+  }
+  
+  return signals;
+}
+
+// Fetch from Reddit r/Africa (free JSON API) - Twitter/X Alternative (Tier 3)
+async function fetchRedditAfrica(): Promise<any[]> {
+  const signals: any[] = [];
+  
+  try {
+    // Reddit public JSON API - no auth required
+    const url = 'https://www.reddit.com/r/africa/search.json?q=disease+OR+outbreak+OR+cholera+OR+epidemic+OR+health+emergency&sort=new&limit=25&restrict_sr=on&t=week';
+    
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'AFRO-Sentinel-Watchtower/1.0 (health surveillance)' }
+    });
+    
+    if (!response.ok) {
+      console.log('Reddit Africa failed:', response.status);
+      return signals;
+    }
+    
+    const data = await response.json();
+    const posts = data.data?.children || [];
+    
+    for (const post of posts) {
+      const postData = post.data;
+      const title = postData.title || '';
+      const selftext = postData.selftext || '';
+      const fullText = `${title} ${selftext}`;
+      
+      const countryISO3 = extractCountryISO3(fullText);
+      if (!countryISO3 || !AFRO_COUNTRIES.includes(countryISO3)) continue;
+      
+      const multilingualDiseaseInfo = detectDiseaseMultilingual(fullText);
+      const diseaseInfo = multilingualDiseaseInfo || detectDisease(fullText);
+      
+      if (!diseaseInfo) continue;
+      
+      const langDetection = detectLanguage(fullText);
+      
+      signals.push({
+        source_id: 'REDDIT_AFRICA',
+        source_name: 'Reddit r/Africa',
+        source_url: `https://reddit.com${postData.permalink}`,
+        source_type: 'social',
+        source_tier: 'tier_3',
+        original_text: title.substring(0, 500),
+        original_language: inferLanguageFromCountry(langDetection.code, countryISO3),
+        location_country: Object.entries(COUNTRY_NAME_TO_ISO3).find(([_, iso]) => iso === countryISO3)?.[0] || countryISO3,
+        location_country_iso: countryISO3,
+        location_lat: COUNTRY_COORDS[countryISO3]?.lat || null,
+        location_lng: COUNTRY_COORDS[countryISO3]?.lng || null,
+        disease_name: diseaseInfo?.name || null,
+        disease_category: diseaseInfo?.category || 'unknown',
+        priority: diseaseInfo?.priority || 'P3',
+        source_timestamp: new Date(postData.created_utc * 1000).toISOString(),
+        confidence_score: 45,  // Community source - lower confidence
+        signal_type: 'community_report',
+        status: 'new',
+        ingestion_source: 'REDDIT-AFRICA',
+        duplicate_hash: generateHash(postData.id || title),
+      });
+    }
+  } catch (error) {
+    console.error('Reddit Africa error:', error);
+  }
+  
+  return signals;
+}
+
+// Fetch from Mastodon health instances - Twitter/X Alternative (Tier 3)
+async function fetchMastodonHealth(): Promise<any[]> {
+  const signals: any[] = [];
+  
+  try {
+    // Query Mastodon.social public timeline for health hashtags (no auth required)
+    const hashtags = ['outbreak', 'cholera', 'ebola', 'measles', 'epidemic'];
+    
+    for (const hashtag of hashtags) {
+      const url = `https://mastodon.social/api/v1/timelines/tag/${hashtag}?limit=10`;
+      
+      const response = await fetch(url, {
+        headers: { 'Accept': 'application/json' }
+      });
+      
+      if (!response.ok) continue;
+      
+      const posts = await response.json();
+      
+      for (const post of posts) {
+        const content = post.content?.replace(/<[^>]+>/g, '') || '';
+        const countryISO3 = extractCountryISO3(content);
+        
+        if (!countryISO3 || !AFRO_COUNTRIES.includes(countryISO3)) continue;
+        
+        const multilingualDiseaseInfo = detectDiseaseMultilingual(content);
+        const diseaseInfo = multilingualDiseaseInfo || detectDisease(content);
+        
+        if (!diseaseInfo) continue;
+        
+        const langDetection = detectLanguage(content);
+        
+        signals.push({
+          source_id: 'MASTODON',
+          source_name: 'Mastodon',
+          source_url: post.url || post.uri,
+          source_type: 'social',
+          source_tier: 'tier_3',
+          original_text: content.substring(0, 500),
+          original_language: inferLanguageFromCountry(langDetection.code, countryISO3, post.language),
+          location_country: Object.entries(COUNTRY_NAME_TO_ISO3).find(([_, iso]) => iso === countryISO3)?.[0] || countryISO3,
+          location_country_iso: countryISO3,
+          location_lat: COUNTRY_COORDS[countryISO3]?.lat || null,
+          location_lng: COUNTRY_COORDS[countryISO3]?.lng || null,
+          disease_name: diseaseInfo?.name || null,
+          disease_category: diseaseInfo?.category || 'unknown',
+          priority: diseaseInfo?.priority || 'P3',
+          source_timestamp: post.created_at || new Date().toISOString(),
+          confidence_score: 40,  // Social source - lower confidence
+          signal_type: 'community_report',
+          status: 'new',
+          ingestion_source: 'MASTODON-HEALTH',
+          duplicate_hash: generateHash(post.id || content),
+        });
+      }
+      
+      // Rate limit between hashtags
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+  } catch (error) {
+    console.error('Mastodon error:', error);
+  }
+  
+  return signals;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -1852,9 +2207,9 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('Starting AFRO-Sentinel signal ingestion from 15 sources...');
+    console.log('Starting AFRO-Sentinel signal ingestion from 20 sources...');
     
-    // Fetch from ALL 15 grassroots sources in parallel
+    // Fetch from ALL 20 grassroots sources in parallel (16 original + 4 new)
     const [
       gdeltSignals, 
       reliefwebSignals, 
@@ -1871,7 +2226,12 @@ serve(async (req) => {
       nationKenyaSignals,
       news24Signals,
       reporterEthSignals,
-      hdxSignals
+      hdxSignals,
+      // NEW SOURCES (DHIS2 alternatives + Social media)
+      whoDonSignals,
+      ochaFtsSignals,
+      redditSignals,
+      mastodonSignals
     ] = await Promise.all([
       fetchGDELT(),
       fetchReliefWeb(),
@@ -1889,6 +2249,11 @@ serve(async (req) => {
       fetchNews24SA(),
       fetchReporterEthiopia(),
       fetchHDX(),
+      // NEW SOURCES
+      fetchWHODON(),
+      fetchOCHAFTS(),
+      fetchRedditAfrica(),
+      fetchMastodonHealth(),
     ]);
     
     const allSignals = [
@@ -1907,10 +2272,15 @@ serve(async (req) => {
       ...nationKenyaSignals,
       ...news24Signals,
       ...reporterEthSignals,
-      ...hdxSignals
+      ...hdxSignals,
+      // NEW SOURCES
+      ...whoDonSignals,
+      ...ochaFtsSignals,
+      ...redditSignals,
+      ...mastodonSignals
     ];
     
-    console.log(`Fetched ${allSignals.length} raw signals from 15 sources:
+    console.log(`Fetched ${allSignals.length} raw signals from 20 sources:
       - GDELT: ${gdeltSignals.length}
       - ReliefWeb: ${reliefwebSignals.length}
       - WHO GHO: ${whoSignals.length}
@@ -1927,6 +2297,10 @@ serve(async (req) => {
       - News24 SA: ${news24Signals.length}
       - Reporter Ethiopia: ${reporterEthSignals.length}
       - HDX: ${hdxSignals.length}
+      - WHO DON (NEW): ${whoDonSignals.length}
+      - OCHA FTS (NEW): ${ochaFtsSignals.length}
+      - Reddit Africa (NEW): ${redditSignals.length}
+      - Mastodon Health (NEW): ${mastodonSignals.length}
     `);
     
     // Deduplicate by hash
