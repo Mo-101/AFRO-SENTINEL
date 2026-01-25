@@ -308,19 +308,24 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
 
   // Update choropleth colors
   useEffect(() => {
-    if (!map.current || !mapLoaded) return;
+    if (!map.current || !mapLoaded || !map.current.isStyleLoaded()) return;
     const stats = countryStats();
     const colorExpr: mapboxgl.Expression = ['match', ['get', 'iso_3166_1_alpha_3']];
     Object.entries(stats).forEach(([code, data]) => {
       colorExpr.push(code, getSeverityColor(data.count, data.hasP1));
     });
     colorExpr.push('#374151');
-    map.current.setPaintProperty('africa-fill', 'fill-color', colorExpr);
+    try {
+      map.current.setPaintProperty('africa-fill', 'fill-color', colorExpr);
+    } catch (e) {
+      // Style not ready yet, will retry on next render
+      console.debug('Map style not ready, skipping choropleth update');
+    }
   }, [signals, mapLoaded, countryStats]);
 
   // Update GeoJSON source when signals change
   useEffect(() => {
-    if (!map.current || !mapLoaded) return;
+    if (!map.current || !mapLoaded || !map.current.isStyleLoaded()) return;
     const source = map.current.getSource('signals') as mapboxgl.GeoJSONSource | undefined;
     if (source) {
       source.setData(signalsToGeoJSON(signals));
@@ -329,11 +334,15 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
 
   // Toggle marker visibility
   useEffect(() => {
-    if (!map.current || !mapLoaded) return;
+    if (!map.current || !mapLoaded || !map.current.isStyleLoaded()) return;
     const visibility = showMarkers ? 'visible' : 'none';
     ['clusters', 'cluster-count', 'unclustered-point'].forEach(layer => {
-      if (map.current?.getLayer(layer)) {
-        map.current.setLayoutProperty(layer, 'visibility', visibility);
+      try {
+        if (map.current?.getLayer(layer)) {
+          map.current.setLayoutProperty(layer, 'visibility', visibility);
+        }
+      } catch (e) {
+        // Ignore if style not ready
       }
     });
   }, [showMarkers, mapLoaded]);
