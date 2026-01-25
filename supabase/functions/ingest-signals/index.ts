@@ -32,7 +32,266 @@ const COUNTRY_NAME_TO_ISO3: Record<string, string> = {
   "swaziland": "SWZ"
 };
 
-// Disease keywords for detection
+// =====================================================
+// LINGUA FIDELITY ENGINE - MULTILINGUAL DISEASE KEYWORDS
+// Hausa (ha), Yoruba (yo), Swahili (sw) + English
+// =====================================================
+
+interface DiseaseKeywordEntry {
+  name: string;
+  category: string;
+  priority: string;
+  keywords: {
+    en: string[];
+    ha: string[];  // Hausa
+    yo: string[];  // Yoruba
+    sw: string[];  // Swahili
+  };
+}
+
+const DISEASE_KEYWORDS_MULTILINGUAL: Record<string, DiseaseKeywordEntry> = {
+  "cholera": {
+    name: "Cholera",
+    category: "enteric",
+    priority: "P1",
+    keywords: {
+      en: ["cholera", "watery diarrhea", "acute diarrhea", "awd"],
+      ha: ["zawo", "ciwon hanji", "gudawa", "zawo ruwa"],
+      yo: ["gbuuru", "igbe gbuuru", "àrùn gbuuru olomi"],
+      sw: ["kipindupindu", "kuhara maji", "kuharisha"]
+    }
+  },
+  "ebola": {
+    name: "Ebola",
+    category: "vhf",
+    priority: "P1",
+    keywords: {
+      en: ["ebola", "hemorrhagic fever", "bleeding", "evd"],
+      ha: ["ebola", "zazzabin zubar jini", "cutar zubar jini"],
+      yo: ["ebola", "ibà ẹjẹ", "àrùn ẹjẹ sísàn"],
+      sw: ["ebola", "homa ya kutoka damu"]
+    }
+  },
+  "marburg": {
+    name: "Marburg",
+    category: "vhf",
+    priority: "P1",
+    keywords: {
+      en: ["marburg", "marburg virus", "hemorrhagic", "mvd"],
+      ha: ["marburg", "cutar marburg"],
+      yo: ["marburg"],
+      sw: ["marburg", "virusi ya marburg"]
+    }
+  },
+  "lassa": {
+    name: "Lassa Fever",
+    category: "vhf",
+    priority: "P1",
+    keywords: {
+      en: ["lassa", "lassa fever", "rodent fever"],
+      ha: ["zazzabin lassa", "cutar lassa", "zazzabin bera"],
+      yo: ["ibà lassa", "àrùn lassa"],
+      sw: ["homa ya lassa"]
+    }
+  },
+  "yellow_fever": {
+    name: "Yellow Fever",
+    category: "vhf",
+    priority: "P1",
+    keywords: {
+      en: ["yellow fever", "jaundice", "flavivirus"],
+      ha: ["zazzabin rawaya", "cutar rawaya"],
+      yo: ["ibà pupa", "àrùn awọ ofeefee"],
+      sw: ["homa ya manjano"]
+    }
+  },
+  "measles": {
+    name: "Measles",
+    category: "vaccine_preventable",
+    priority: "P2",
+    keywords: {
+      en: ["measles", "rubeola", "rash"],
+      ha: ["kyanda", "cutar kyanda"],
+      yo: ["igbonwo", "àrùn igbonwo"],
+      sw: ["surua", "chokaa", "upele"]
+    }
+  },
+  "polio": {
+    name: "Polio",
+    category: "vaccine_preventable",
+    priority: "P1",
+    keywords: {
+      en: ["polio", "poliomyelitis", "paralysis", "afp"],
+      ha: ["shan inna", "cutar gurguzu"],
+      yo: ["roparose", "àrùn ẹsẹ rírọ"],
+      sw: ["polio", "kupooza"]
+    }
+  },
+  "meningitis": {
+    name: "Meningococcal disease",
+    category: "vaccine_preventable",
+    priority: "P1",
+    keywords: {
+      en: ["meningitis", "meningococcal", "stiff neck"],
+      ha: ["sankarau", "cutar sankarau", "wuyan taurin"],
+      yo: ["àrùn ọpọlọ", "orí wíwọ"],
+      sw: ["homa ya uti wa mgongo", "shingo kavu"]
+    }
+  },
+  "malaria": {
+    name: "Malaria",
+    category: "vector_borne",
+    priority: "P3",
+    keywords: {
+      en: ["malaria", "plasmodium"],
+      ha: ["zazzabin cizon sauro", "malariya"],
+      yo: ["ibà", "arun efon"],
+      sw: ["malaria", "homa ya malaria"]
+    }
+  },
+  "dengue": {
+    name: "Dengue",
+    category: "vector_borne",
+    priority: "P2",
+    keywords: {
+      en: ["dengue", "breakbone fever"],
+      ha: ["zazzabin dengue"],
+      yo: ["ibà dengue"],
+      sw: ["homa ya dengue"]
+    }
+  },
+  "mpox": {
+    name: "Mpox",
+    category: "zoonotic",
+    priority: "P2",
+    keywords: {
+      en: ["mpox", "monkeypox", "pox", "clade"],
+      ha: ["mpox", "agana", "cutar agana"],
+      yo: ["mpox", "àrùn ọbọ"],
+      sw: ["mpox", "ndui ya nyani"]
+    }
+  },
+  "covid": {
+    name: "COVID-19",
+    category: "respiratory",
+    priority: "P3",
+    keywords: {
+      en: ["covid", "coronavirus", "sars-cov-2"],
+      ha: ["covid", "korona", "cutar korona"],
+      yo: ["covid", "korona"],
+      sw: ["covid", "korona"]
+    }
+  },
+  "plague": {
+    name: "Plague",
+    category: "zoonotic",
+    priority: "P1",
+    keywords: {
+      en: ["plague", "bubonic", "pneumonic plague"],
+      ha: ["annoba", "cutar annoba"],
+      yo: ["àjàkálẹ̀ àrùn"],
+      sw: ["tauni", "pigo"]
+    }
+  },
+  "typhoid": {
+    name: "Typhoid fever",
+    category: "enteric",
+    priority: "P2",
+    keywords: {
+      en: ["typhoid", "enteric fever"],
+      ha: ["zazzabin typhoid", "taifo"],
+      yo: ["ibà typhoid", "taifo"],
+      sw: ["homa ya matumbo", "taifodi"]
+    }
+  },
+  "rabies": {
+    name: "Rabies",
+    category: "zoonotic",
+    priority: "P2",
+    keywords: {
+      en: ["rabies", "hydrophobia", "dog bite"],
+      ha: ["haukan kare", "cutar kare"],
+      yo: ["aja wèrè", "igbẹ aja"],
+      sw: ["kichaa cha mbwa"]
+    }
+  },
+  "tuberculosis": {
+    name: "Tuberculosis",
+    category: "respiratory",
+    priority: "P3",
+    keywords: {
+      en: ["tuberculosis", "tb", "pulmonary"],
+      ha: ["tarin fuka", "cutar huhu"],
+      yo: ["iko", "àrùn ẹdọ̀fóró"],
+      sw: ["kifua kikuu", "tb"]
+    }
+  },
+  "anthrax": {
+    name: "Anthrax",
+    category: "zoonotic",
+    priority: "P1",
+    keywords: {
+      en: ["anthrax", "bacillus anthracis"],
+      ha: ["cutar anthrax"],
+      yo: ["àrùn anthrax"],
+      sw: ["kimeta"]
+    }
+  },
+  "rift_valley_fever": {
+    name: "Rift Valley Fever",
+    category: "vhf",
+    priority: "P1",
+    keywords: {
+      en: ["rift valley fever", "rvf"],
+      ha: ["zazzabin rift valley"],
+      yo: ["ibà rift valley"],
+      sw: ["homa ya bonde la ufa"]
+    }
+  },
+  "crimean_congo": {
+    name: "CCHF",
+    category: "vhf",
+    priority: "P1",
+    keywords: {
+      en: ["crimean-congo", "cchf", "hemorrhagic"],
+      ha: ["zazzabin zubar jini"],
+      yo: ["ibà ẹjẹ"],
+      sw: ["homa ya kutoka damu"]
+    }
+  }
+};
+
+// Language-specific outbreak/alert keywords
+const ALERT_KEYWORDS: Record<string, string[]> = {
+  en: ["outbreak", "epidemic", "surge", "emergency", "cases", "deaths", "suspected", "confirmed"],
+  ha: ["annobar", "cutar da ta yadu", "gaggawa", "mutuwa", "masu cutar"],
+  yo: ["àjàkálẹ̀", "àrùn", "pàjáwìrì", "ikú", "àwọn aláìsàn"],
+  sw: ["mlipuko", "janga", "dharura", "vifo", "visa"]
+};
+
+// Hausa-speaking regions for trust scoring
+const HAUSA_COUNTRIES = ["NGA", "NER", "GHA", "CMR", "TCD", "BFA"];
+// Yoruba-speaking regions
+const YORUBA_COUNTRIES = ["NGA", "BEN", "TGO"];
+// Swahili-speaking regions
+const SWAHILI_COUNTRIES = ["TZA", "KEN", "UGA", "RWA", "BDI", "COD", "MOZ", "COM"];
+
+// Simple language patterns for detection
+const LANGUAGE_PATTERNS: Record<string, { uniqueChars?: RegExp; commonWords: string[] }> = {
+  ha: {
+    uniqueChars: /[ɓɗƙƴ]/i,
+    commonWords: ["da", "na", "ne", "ce", "ba", "ya", "ta", "wa", "an", "su", "ko", "amma", "domin", "saboda", "kuma"]
+  },
+  yo: {
+    uniqueChars: /[ẹọṣ]/i,
+    commonWords: ["ti", "ni", "ó", "àti", "pẹ̀lú", "sí", "kí", "náà", "wọn", "àwọn", "kan", "jẹ́", "nínú", "láti"]
+  },
+  sw: {
+    commonWords: ["na", "ya", "wa", "kwa", "ni", "la", "au", "za", "katika", "kutoka", "kwamba", "hii", "watu", "kama", "zaidi"]
+  }
+};
+
+// Legacy simple keywords for backwards compatibility
 const DISEASE_KEYWORDS: Record<string, { name: string; category: string; priority: string }> = {
   "cholera": { name: "Cholera", category: "enteric", priority: "P1" },
   "diarrhea": { name: "Cholera", category: "enteric", priority: "P2" },
@@ -100,6 +359,150 @@ function extractCountryISO3(text: string): string | null {
   return null;
 }
 
+// =====================================================
+// LINGUA FIDELITY DETECTION FUNCTIONS
+// =====================================================
+
+// Detect language from text patterns
+function detectLanguage(text: string): { code: string; confidence: number } {
+  // Check for unique script characters first
+  for (const [langCode, patterns] of Object.entries(LANGUAGE_PATTERNS)) {
+    if (patterns.uniqueChars && patterns.uniqueChars.test(text)) {
+      return { code: langCode, confidence: 95 };
+    }
+  }
+  
+  const lowerText = text.toLowerCase();
+  const scores: Record<string, number> = {};
+  
+  // Count common words for each language
+  for (const [langCode, patterns] of Object.entries(LANGUAGE_PATTERNS)) {
+    let matches = 0;
+    for (const word of patterns.commonWords) {
+      const regex = new RegExp(`\\b${word}\\b`, 'gi');
+      const count = (lowerText.match(regex) || []).length;
+      matches += count;
+    }
+    scores[langCode] = matches;
+  }
+  
+  // Find best match
+  let bestLang = 'en';
+  let bestScore = 0;
+  for (const [lang, score] of Object.entries(scores)) {
+    if (score > bestScore) {
+      bestScore = score;
+      bestLang = lang;
+    }
+  }
+  
+  // Calculate confidence
+  const wordCount = text.split(/\s+/).length;
+  const confidence = Math.min(90, Math.round((bestScore / Math.max(wordCount, 1)) * 100) + 40);
+  
+  if (bestScore < 2) {
+    return { code: 'en', confidence: 50 };
+  }
+  
+  return { code: bestLang, confidence };
+}
+
+// Multilingual disease detection with keyword matching
+function detectDiseaseMultilingual(text: string): {
+  name: string;
+  category: string;
+  priority: string;
+  matched_keywords: string[];
+  detected_language: string;
+} | null {
+  const lowerText = text.toLowerCase();
+  
+  for (const [_, diseaseInfo] of Object.entries(DISEASE_KEYWORDS_MULTILINGUAL)) {
+    const matchedKeywords: string[] = [];
+    let matchedLanguage = 'en';
+    
+    for (const [lang, keywords] of Object.entries(diseaseInfo.keywords)) {
+      for (const keyword of keywords) {
+        if (lowerText.includes(keyword.toLowerCase())) {
+          matchedKeywords.push(keyword);
+          if (lang !== 'en') matchedLanguage = lang;
+        }
+      }
+    }
+    
+    if (matchedKeywords.length > 0) {
+      return {
+        name: diseaseInfo.name,
+        category: diseaseInfo.category,
+        priority: diseaseInfo.priority,
+        matched_keywords: matchedKeywords,
+        detected_language: matchedLanguage
+      };
+    }
+  }
+  
+  return null;
+}
+
+// Calculate Language-Location Trust Score
+function calculateLinguaTrustScore(
+  detectedLanguage: string,
+  countryISO3: string,
+  sourceTier: string,
+  keywordMatches: number
+): number {
+  let score = 0;
+  
+  // Factor 1: Language-Country Match (0-35 points)
+  if (detectedLanguage === 'ha' && HAUSA_COUNTRIES.includes(countryISO3)) {
+    score += 35;
+  } else if (detectedLanguage === 'yo' && YORUBA_COUNTRIES.includes(countryISO3)) {
+    score += 35;
+  } else if (detectedLanguage === 'sw' && SWAHILI_COUNTRIES.includes(countryISO3)) {
+    score += 35;
+  } else if (['ha', 'yo', 'sw'].includes(detectedLanguage)) {
+    score += 15; // African language but different region
+  } else if (detectedLanguage === 'en') {
+    score += 10; // Colonial language
+  }
+  
+  // Factor 2: Local keyword matches (0-30 points)
+  score += Math.min(30, keywordMatches * 6);
+  
+  // Factor 3: Source tier (0-20 points)
+  const tierWeights: Record<string, number> = {
+    'tier_1': 20,
+    'tier_2': 15,
+    'tier_3': 10
+  };
+  score += tierWeights[sourceTier] || 10;
+  
+  // Factor 4: Base authenticity (15 points for any local language)
+  if (['ha', 'yo', 'sw'].includes(detectedLanguage)) {
+    score += 15;
+  }
+  
+  return Math.min(100, score);
+}
+
+// Check for alert indicators in text (multilingual)
+function detectAlertIndicators(text: string): { type: string; language: string }[] {
+  const lowerText = text.toLowerCase();
+  const results: { type: string; language: string }[] = [];
+  
+  for (const [alertType, keywords] of Object.entries(ALERT_KEYWORDS)) {
+    for (const keyword of keywords) {
+      if (lowerText.includes(keyword.toLowerCase())) {
+        results.push({ type: alertType, language: alertType === 'en' ? 'en' : 'local' });
+        break;
+      }
+    }
+  }
+  
+  return results;
+}
+
+// Legacy simple disease detection (fallback)
 function detectDisease(text: string): { name: string; category: string; priority: string } | null {
   const lowerText = text.toLowerCase();
   for (const [keyword, info] of Object.entries(DISEASE_KEYWORDS)) {
@@ -144,16 +547,31 @@ async function fetchGDELT(): Promise<any[]> {
         const countryISO3 = extractCountryISO3(title);
         if (!countryISO3 || !AFRO_COUNTRIES.includes(countryISO3)) continue;
         
-        const diseaseInfo = detectDisease(title);
+        // LINGUA FIDELITY: Use multilingual disease detection
+        const multilingualDiseaseInfo = detectDiseaseMultilingual(title);
+        const diseaseInfo = multilingualDiseaseInfo || detectDisease(title);
+        
+        // LINGUA FIDELITY: Detect language
+        const langDetection = detectLanguage(title);
+        const sourceTier = 'tier_2';
+        
+        // LINGUA FIDELITY: Calculate trust score
+        const localKeywordCount = multilingualDiseaseInfo?.matched_keywords?.length || 0;
+        const linguaTrustScore = calculateLinguaTrustScore(
+          langDetection.code, 
+          countryISO3, 
+          sourceTier,
+          localKeywordCount
+        );
         
         signals.push({
           source_id: 'GDELT',
           source_name: article.domain || 'GDELT',
           source_url: article.url,
           source_type: 'news',
-          source_tier: 'tier_2',
+          source_tier: sourceTier,
           original_text: title,
-          original_language: article.language || 'en',
+          original_language: langDetection.code !== 'en' ? langDetection.code : (article.language || 'en'),
           location_country: Object.entries(COUNTRY_NAME_TO_ISO3).find(([_, iso]) => iso === countryISO3)?.[0] || countryISO3,
           location_country_iso: countryISO3,
           location_lat: COUNTRY_COORDS[countryISO3]?.lat || null,
@@ -163,6 +581,7 @@ async function fetchGDELT(): Promise<any[]> {
           priority: diseaseInfo?.priority || 'P3',
           source_timestamp: article.seendate || new Date().toISOString(),
           confidence_score: 65,
+          lingua_fidelity_score: linguaTrustScore,
           signal_type: 'media_report',
           status: 'new',
           ingestion_source: 'GDELT-V2',
@@ -207,16 +626,32 @@ async function fetchReliefWeb(): Promise<any[]> {
       if (!countryISO3 || !AFRO_COUNTRIES.includes(countryISO3)) continue;
       
       const title = fields.title || '';
-      const diseaseInfo = detectDisease(title);
+      
+      // LINGUA FIDELITY: Use multilingual disease detection
+      const multilingualDiseaseInfo = detectDiseaseMultilingual(title);
+      const diseaseInfo = multilingualDiseaseInfo || detectDisease(title);
+      
+      // LINGUA FIDELITY: Detect language
+      const langDetection = detectLanguage(title);
+      const sourceTier = 'tier_1';
+      
+      // LINGUA FIDELITY: Calculate trust score
+      const localKeywordCount = multilingualDiseaseInfo?.matched_keywords?.length || 0;
+      const linguaTrustScore = calculateLinguaTrustScore(
+        langDetection.code, 
+        countryISO3, 
+        sourceTier,
+        localKeywordCount
+      );
       
       signals.push({
         source_id: 'RELIEF-WEB',
         source_name: fields.source?.[0]?.name || 'ReliefWeb',
         source_url: fields.url_alias || `https://reliefweb.int/node/${report.id}`,
         source_type: 'official',
-        source_tier: 'tier_1',
+        source_tier: sourceTier,
         original_text: title,
-        original_language: fields.language?.[0]?.code || 'en',
+        original_language: langDetection.code !== 'en' ? langDetection.code : (fields.language?.[0]?.code || 'en'),
         location_country: fields.primary_country?.name || countryISO3,
         location_country_iso: countryISO3,
         location_lat: COUNTRY_COORDS[countryISO3]?.lat || null,
@@ -226,6 +661,7 @@ async function fetchReliefWeb(): Promise<any[]> {
         priority: diseaseInfo?.priority || 'P3',
         source_timestamp: fields.date?.created || new Date().toISOString(),
         confidence_score: 80,
+        lingua_fidelity_score: linguaTrustScore,
         signal_type: 'official_report',
         status: 'new',
         ingestion_source: 'RELIEF-WEB',
@@ -269,16 +705,31 @@ async function fetchAllAfrica(): Promise<any[]> {
       
       if (!countryISO3 || !AFRO_COUNTRIES.includes(countryISO3)) continue;
       
-      const diseaseInfo = detectDisease(title);
+      // LINGUA FIDELITY: Use multilingual disease detection
+      const multilingualDiseaseInfo = detectDiseaseMultilingual(title);
+      const diseaseInfo = multilingualDiseaseInfo || detectDisease(title);
+      
+      // LINGUA FIDELITY: Detect language
+      const langDetection = detectLanguage(title);
+      const sourceTier = 'tier_2';
+      
+      // LINGUA FIDELITY: Calculate trust score
+      const localKeywordCount = multilingualDiseaseInfo?.matched_keywords?.length || 0;
+      const linguaTrustScore = calculateLinguaTrustScore(
+        langDetection.code, 
+        countryISO3, 
+        sourceTier,
+        localKeywordCount
+      );
       
       signals.push({
         source_id: 'ALLAFRICA',
         source_name: 'AllAfrica',
         source_url: linkMatch?.[1] || '',
         source_type: 'news',
-        source_tier: 'tier_2',
+        source_tier: sourceTier,
         original_text: title,
-        original_language: 'en',
+        original_language: langDetection.code !== 'en' ? langDetection.code : 'en',
         location_country: Object.entries(COUNTRY_NAME_TO_ISO3).find(([_, iso]) => iso === countryISO3)?.[0] || countryISO3,
         location_country_iso: countryISO3,
         location_lat: COUNTRY_COORDS[countryISO3]?.lat || null,
@@ -288,6 +739,7 @@ async function fetchAllAfrica(): Promise<any[]> {
         priority: diseaseInfo?.priority || 'P3',
         source_timestamp: dateMatch?.[1] || new Date().toISOString(),
         confidence_score: 70,
+        lingua_fidelity_score: linguaTrustScore,
         signal_type: 'media_report',
         status: 'new',
         ingestion_source: 'ALLAFRICA-HEALTH',
