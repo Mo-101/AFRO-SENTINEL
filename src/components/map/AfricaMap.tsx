@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Signal } from '@/hooks/useSignals';
-import { MAPBOX_TOKEN, AFRO_COUNTRIES, PRIORITIES } from '@/lib/constants';
+import { MAPBOX_TOKEN, AFRO_COUNTRIES } from '@/lib/constants';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Layers, ZoomIn, ZoomOut, Locate, AlertTriangle } from 'lucide-react';
@@ -16,50 +16,64 @@ interface AfricaMapProps {
   onCountrySelect?: (country: string) => void;
 }
 
-// Color scale for severity (based on signal count and priority)
+// Color scale for choropleth severity
 const getSeverityColor = (count: number, hasP1: boolean): string => {
-  if (hasP1) return '#dc2626'; // red-600
-  if (count >= 10) return '#ea580c'; // orange-600
-  if (count >= 5) return '#d97706'; // amber-600
-  if (count >= 2) return '#ca8a04'; // yellow-600
-  if (count >= 1) return '#65a30d'; // lime-600
-  return '#6b7280'; // gray-500
+  if (hasP1) return '#dc2626';
+  if (count >= 10) return '#ea580c';
+  if (count >= 5) return '#d97706';
+  if (count >= 2) return '#ca8a04';
+  if (count >= 1) return '#65a30d';
+  return '#374151';
 };
 
-// Priority marker colors
-const getPriorityColor = (priority: string): string => {
-  switch (priority) {
-    case 'P1': return '#dc2626';
-    case 'P2': return '#ea580c';
-    case 'P3': return '#ca8a04';
-    case 'P4': return '#22c55e';
-    default: return '#6b7280';
-  }
+// Priority colors for markers
+const PRIORITY_COLORS: Record<string, string> = {
+  P1: '#dc2626',
+  P2: '#ea580c',
+  P3: '#ca8a04',
+  P4: '#22c55e',
 };
+
+// Convert signals to GeoJSON
+const signalsToGeoJSON = (signals: Signal[]): GeoJSON.FeatureCollection => ({
+  type: 'FeatureCollection',
+  features: signals
+    .filter(s => s.location_lat && s.location_lng)
+    .map(signal => ({
+      type: 'Feature' as const,
+      geometry: {
+        type: 'Point' as const,
+        coordinates: [signal.location_lng!, signal.location_lat!],
+      },
+      properties: {
+        id: signal.id,
+        priority: signal.priority,
+        priorityNum: signal.priority === 'P1' ? 1 : signal.priority === 'P2' ? 2 : signal.priority === 'P3' ? 3 : 4,
+        disease: signal.disease_name || 'Unknown',
+        country: signal.location_country,
+        admin1: signal.location_admin1 || '',
+        source: signal.source_name,
+        status: signal.status,
+      },
+    })),
+});
 
 export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySelect }: AfricaMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const popup = useRef<mapboxgl.Popup | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [showMarkers, setShowMarkers] = useState(true);
 
   // Compute country-level statistics
   const countryStats = useCallback(() => {
-    const stats: Record<string, { count: number; hasP1: boolean; signals: Signal[] }> = {};
-    
+    const stats: Record<string, { count: number; hasP1: boolean }> = {};
     signals.forEach(signal => {
-      const countryCode = signal.location_country_iso || '';
-      if (!stats[countryCode]) {
-        stats[countryCode] = { count: 0, hasP1: false, signals: [] };
-      }
-      stats[countryCode].count += 1;
-      stats[countryCode].signals.push(signal);
-      if (signal.priority === 'P1') {
-        stats[countryCode].hasP1 = true;
-      }
+      const code = signal.location_country_iso || '';
+      if (!stats[code]) stats[code] = { count: 0, hasP1: false };
+      stats[code].count += 1;
+      if (signal.priority === 'P1') stats[code].hasP1 = true;
     });
-    
     return stats;
   }, [signals]);
 
@@ -70,24 +84,35 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/dark-v11',
-      center: [20, 0], // Center on Africa
+      center: [20, 0],
       zoom: 3,
       minZoom: 2,
-      maxZoom: 12,
-      maxBounds: [[-30, -40], [60, 40]], // Restrict to Africa region
+      maxZoom: 14,
+      maxBounds: [[-35, -45], [65, 45]],
+    });
+
+    // Add navigation control
+    map.current.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
+
+    // Create reusable popup
+    popup.current = new mapboxgl.Popup({
+      closeButton: false,
+      closeOnClick: false,
+      offset: 15,
+      className: 'signal-popup',
     });
 
     map.current.on('load', () => {
+      const m = map.current!;
       setMapLoaded(true);
 
-      // Add Africa countries source
-      map.current!.addSource('africa-countries', {
+      // === CHOROPLETH: Country boundaries ===
+      m.addSource('africa-countries', {
         type: 'vector',
         url: 'mapbox://mapbox.country-boundaries-v1',
       });
 
-      // Add choropleth fill layer
-      map.current!.addLayer({
+      m.addLayer({
         id: 'africa-fill',
         type: 'fill',
         source: 'africa-countries',
@@ -95,12 +120,11 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
         filter: ['in', 'iso_3166_1_alpha_3', ...AFRO_COUNTRIES.map(c => c.code)],
         paint: {
           'fill-color': '#374151',
-          'fill-opacity': 0.6,
+          'fill-opacity': 0.5,
         },
       });
 
-      // Add country borders
-      map.current!.addLayer({
+      m.addLayer({
         id: 'africa-borders',
         type: 'line',
         source: 'africa-countries',
@@ -108,145 +132,220 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
         filter: ['in', 'iso_3166_1_alpha_3', ...AFRO_COUNTRIES.map(c => c.code)],
         paint: {
           'line-color': '#6b7280',
-          'line-width': 1,
+          'line-width': 0.8,
         },
       });
 
-      // Add click handler for countries
-      map.current!.on('click', 'africa-fill', (e) => {
-        if (e.features && e.features[0]) {
-          const countryCode = e.features[0].properties?.iso_3166_1_alpha_3;
-          const country = AFRO_COUNTRIES.find(c => c.code === countryCode);
-          if (country && onCountrySelect) {
-            onCountrySelect(country.name);
-          }
+      // === SIGNALS: GeoJSON source with clustering ===
+      m.addSource('signals', {
+        type: 'geojson',
+        data: signalsToGeoJSON([]),
+        cluster: true,
+        clusterMaxZoom: 10,
+        clusterRadius: 50,
+        clusterProperties: {
+          // Track minimum priority in cluster (1=P1, 4=P4)
+          minPriority: ['min', ['get', 'priorityNum']],
+        },
+      });
+
+      // Cluster circles layer
+      m.addLayer({
+        id: 'clusters',
+        type: 'circle',
+        source: 'signals',
+        filter: ['has', 'point_count'],
+        paint: {
+          'circle-color': [
+            'step',
+            ['get', 'minPriority'],
+            PRIORITY_COLORS.P1, // minPriority <= 1
+            1.5, PRIORITY_COLORS.P2,
+            2.5, PRIORITY_COLORS.P3,
+            3.5, PRIORITY_COLORS.P4,
+          ],
+          'circle-radius': [
+            'step',
+            ['get', 'point_count'],
+            18,   // < 10 points
+            10, 24,
+            50, 32,
+            100, 40,
+          ],
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#ffffff',
+          'circle-opacity': 0.9,
+        },
+      });
+
+      // Cluster count label
+      m.addLayer({
+        id: 'cluster-count',
+        type: 'symbol',
+        source: 'signals',
+        filter: ['has', 'point_count'],
+        layout: {
+          'text-field': ['get', 'point_count_abbreviated'],
+          'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
+          'text-size': 12,
+        },
+        paint: {
+          'text-color': '#ffffff',
+        },
+      });
+
+      // Unclustered individual points
+      m.addLayer({
+        id: 'unclustered-point',
+        type: 'circle',
+        source: 'signals',
+        filter: ['!', ['has', 'point_count']],
+        paint: {
+          'circle-color': [
+            'match',
+            ['get', 'priority'],
+            'P1', PRIORITY_COLORS.P1,
+            'P2', PRIORITY_COLORS.P2,
+            'P3', PRIORITY_COLORS.P3,
+            'P4', PRIORITY_COLORS.P4,
+            '#6b7280',
+          ],
+          'circle-radius': [
+            'interpolate', ['linear'], ['zoom'],
+            3, 6,
+            8, 10,
+            12, 14,
+          ],
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#ffffff',
+          'circle-opacity': 0.95,
+        },
+      });
+
+      // === INTERACTIONS ===
+
+      // Click on cluster: zoom in
+      m.on('click', 'clusters', (e) => {
+        const features = m.queryRenderedFeatures(e.point, { layers: ['clusters'] });
+        if (!features.length) return;
+        const clusterId = features[0].properties?.cluster_id;
+        const source = m.getSource('signals') as mapboxgl.GeoJSONSource;
+        source.getClusterExpansionZoom(clusterId, (err, zoom) => {
+          if (err) return;
+          m.easeTo({
+            center: (features[0].geometry as GeoJSON.Point).coordinates as [number, number],
+            zoom: zoom ?? 6,
+          });
+        });
+      });
+
+      // Click on unclustered point: select signal
+      m.on('click', 'unclustered-point', (e) => {
+        if (!e.features?.length) return;
+        const props = e.features[0].properties;
+        if (props?.id && onSignalSelect) {
+          const signal = signals.find(s => s.id === props.id);
+          if (signal) onSignalSelect(signal);
         }
       });
 
-      // Change cursor on hover
-      map.current!.on('mouseenter', 'africa-fill', () => {
-        map.current!.getCanvas().style.cursor = 'pointer';
+      // Hover on unclustered point: show popup
+      m.on('mouseenter', 'unclustered-point', (e) => {
+        m.getCanvas().style.cursor = 'pointer';
+        if (!e.features?.length || !popup.current) return;
+        const coords = (e.features[0].geometry as GeoJSON.Point).coordinates.slice() as [number, number];
+        const props = e.features[0].properties!;
+        popup.current
+          .setLngLat(coords)
+          .setHTML(`
+            <div class="signal-popup-content">
+              <div class="popup-header" style="color: ${PRIORITY_COLORS[props.priority] || '#fff'}">
+                <strong>${props.priority}</strong> · ${props.disease}
+              </div>
+              <div class="popup-location">${props.country}${props.admin1 ? ', ' + props.admin1 : ''}</div>
+              <div class="popup-source">${props.source}</div>
+            </div>
+          `)
+          .addTo(m);
       });
 
-      map.current!.on('mouseleave', 'africa-fill', () => {
-        map.current!.getCanvas().style.cursor = '';
+      m.on('mouseleave', 'unclustered-point', () => {
+        m.getCanvas().style.cursor = '';
+        popup.current?.remove();
+      });
+
+      // Hover on cluster: pointer cursor
+      m.on('mouseenter', 'clusters', () => {
+        m.getCanvas().style.cursor = 'pointer';
+      });
+      m.on('mouseleave', 'clusters', () => {
+        m.getCanvas().style.cursor = '';
+      });
+
+      // Click on country choropleth
+      m.on('click', 'africa-fill', (e) => {
+        if (e.features?.[0]) {
+          const code = e.features[0].properties?.iso_3166_1_alpha_3;
+          const country = AFRO_COUNTRIES.find(c => c.code === code);
+          if (country && onCountrySelect) onCountrySelect(country.name);
+        }
+      });
+
+      m.on('mouseenter', 'africa-fill', () => {
+        m.getCanvas().style.cursor = 'pointer';
+      });
+      m.on('mouseleave', 'africa-fill', () => {
+        m.getCanvas().style.cursor = '';
       });
     });
 
     return () => {
+      popup.current?.remove();
       map.current?.remove();
       map.current = null;
     };
-  }, [onCountrySelect]);
+  }, [onCountrySelect, onSignalSelect, signals]);
 
-  // Update choropleth colors based on signals
+  // Update choropleth colors
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
-
     const stats = countryStats();
-    
-    // Build color expression for choropleth
-    const colorExpression: mapboxgl.Expression = ['match', ['get', 'iso_3166_1_alpha_3']];
-    
+    const colorExpr: mapboxgl.Expression = ['match', ['get', 'iso_3166_1_alpha_3']];
     Object.entries(stats).forEach(([code, data]) => {
-      colorExpression.push(code, getSeverityColor(data.count, data.hasP1));
+      colorExpr.push(code, getSeverityColor(data.count, data.hasP1));
     });
-    
-    // Default color for countries without signals
-    colorExpression.push('#374151');
-
-    map.current.setPaintProperty('africa-fill', 'fill-color', colorExpression);
+    colorExpr.push('#374151');
+    map.current.setPaintProperty('africa-fill', 'fill-color', colorExpr);
   }, [signals, mapLoaded, countryStats]);
 
-  // Add/update markers for signals
+  // Update GeoJSON source when signals change
   useEffect(() => {
-    if (!map.current || !mapLoaded || !showMarkers) {
-      // Clear markers if hidden
-      markersRef.current.forEach(marker => marker.remove());
-      markersRef.current = [];
-      return;
+    if (!map.current || !mapLoaded) return;
+    const source = map.current.getSource('signals') as mapboxgl.GeoJSONSource | undefined;
+    if (source) {
+      source.setData(signalsToGeoJSON(signals));
     }
+  }, [signals, mapLoaded]);
 
-    // Clear existing markers
-    markersRef.current.forEach(marker => marker.remove());
-    markersRef.current = [];
-
-    // Add markers for signals with coordinates
-    signals.forEach(signal => {
-      if (!signal.location_lat || !signal.location_lng) return;
-
-      // Create custom marker element
-      const el = document.createElement('div');
-      el.className = 'signal-marker';
-      el.style.cssText = `
-        width: 24px;
-        height: 24px;
-        background: ${getPriorityColor(signal.priority)};
-        border: 2px solid white;
-        border-radius: 50%;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        transition: transform 0.2s;
-      `;
-      
-      // Add pulse animation for P1 signals
-      if (signal.priority === 'P1') {
-        el.style.animation = 'pulse 2s infinite';
+  // Toggle marker visibility
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+    const visibility = showMarkers ? 'visible' : 'none';
+    ['clusters', 'cluster-count', 'unclustered-point'].forEach(layer => {
+      if (map.current?.getLayer(layer)) {
+        map.current.setLayoutProperty(layer, 'visibility', visibility);
       }
-
-      el.addEventListener('mouseenter', () => {
-        el.style.transform = 'scale(1.3)';
-      });
-      el.addEventListener('mouseleave', () => {
-        el.style.transform = 'scale(1)';
-      });
-
-      // Create popup
-      const popup = new mapboxgl.Popup({
-        offset: 25,
-        closeButton: false,
-        className: 'signal-popup',
-      }).setHTML(`
-        <div style="padding: 8px; max-width: 200px;">
-          <div style="font-weight: bold; margin-bottom: 4px; color: ${getPriorityColor(signal.priority)};">
-            ${signal.priority} - ${signal.disease_name || 'Unknown'}
-          </div>
-          <div style="font-size: 12px; color: #9ca3af;">
-            ${signal.location_country}${signal.location_admin1 ? `, ${signal.location_admin1}` : ''}
-          </div>
-          <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">
-            ${signal.source_name}
-          </div>
-        </div>
-      `);
-
-      const marker = new mapboxgl.Marker(el)
-        .setLngLat([signal.location_lng, signal.location_lat])
-        .setPopup(popup)
-        .addTo(map.current!);
-
-      // Click handler
-      el.addEventListener('click', () => {
-        onSignalSelect?.(signal);
-      });
-
-      markersRef.current.push(marker);
     });
-  }, [signals, mapLoaded, showMarkers, onSignalSelect]);
+  }, [showMarkers, mapLoaded]);
 
   // Fly to selected signal
   useEffect(() => {
     if (!map.current || !mapLoaded || !selectedSignal) return;
-
     if (selectedSignal.location_lat && selectedSignal.location_lng) {
       map.current.flyTo({
         center: [selectedSignal.location_lng, selectedSignal.location_lat],
-        zoom: 6,
-        duration: 1500,
-        essential: true,
+        zoom: 8,
+        duration: 1200,
       });
     } else if (selectedSignal.location_country_iso) {
       const country = AFRO_COUNTRIES.find(c => c.code === selectedSignal.location_country_iso);
@@ -254,25 +353,18 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
         map.current.flyTo({
           center: [country.lng, country.lat],
           zoom: 5,
-          duration: 1500,
-          essential: true,
+          duration: 1200,
         });
       }
     }
   }, [selectedSignal, mapLoaded]);
 
-  // Map controls
+  // Controls
   const handleZoomIn = () => map.current?.zoomIn();
   const handleZoomOut = () => map.current?.zoomOut();
-  const handleResetView = () => {
-    map.current?.flyTo({
-      center: [20, 0],
-      zoom: 3,
-      duration: 1000,
-    });
-  };
+  const handleReset = () => map.current?.flyTo({ center: [20, 0], zoom: 3, duration: 800 });
 
-  // Count active alerts by priority
+  // Alert counts
   const alertCounts = signals.reduce((acc, s) => {
     acc[s.priority] = (acc[s.priority] || 0) + 1;
     return acc;
@@ -280,10 +372,9 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
 
   return (
     <div className="relative w-full h-full rounded-2xl overflow-hidden border bg-card">
-      {/* Map Container */}
       <div ref={mapContainer} className="absolute inset-0" />
 
-      {/* Loading overlay */}
+      {/* Loading */}
       {!mapLoaded && (
         <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-10">
           <div className="flex flex-col items-center gap-2">
@@ -293,35 +384,20 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
         </div>
       )}
 
-      {/* Map Controls */}
+      {/* Controls */}
       <div className="absolute top-4 right-4 flex flex-col gap-2 z-20">
-        <Button
-          size="icon"
-          variant="secondary"
-          onClick={handleZoomIn}
-          className="h-8 w-8 bg-card/90 backdrop-blur"
-        >
+        <Button size="icon" variant="secondary" onClick={handleZoomIn} className="h-8 w-8 bg-card/90 backdrop-blur">
           <ZoomIn className="h-4 w-4" />
         </Button>
-        <Button
-          size="icon"
-          variant="secondary"
-          onClick={handleZoomOut}
-          className="h-8 w-8 bg-card/90 backdrop-blur"
-        >
+        <Button size="icon" variant="secondary" onClick={handleZoomOut} className="h-8 w-8 bg-card/90 backdrop-blur">
           <ZoomOut className="h-4 w-4" />
         </Button>
-        <Button
-          size="icon"
-          variant="secondary"
-          onClick={handleResetView}
-          className="h-8 w-8 bg-card/90 backdrop-blur"
-        >
+        <Button size="icon" variant="secondary" onClick={handleReset} className="h-8 w-8 bg-card/90 backdrop-blur">
           <Locate className="h-4 w-4" />
         </Button>
         <Button
           size="icon"
-          variant={showMarkers ? "default" : "secondary"}
+          variant={showMarkers ? 'default' : 'secondary'}
           onClick={() => setShowMarkers(!showMarkers)}
           className="h-8 w-8 bg-card/90 backdrop-blur"
         >
@@ -336,26 +412,18 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
           Signal Density
         </div>
         <div className="flex flex-col gap-1 text-xs">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#dc2626' }} />
-            <span>Critical (P1)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#ea580c' }} />
-            <span>High (10+)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#d97706' }} />
-            <span>Medium (5-9)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#ca8a04' }} />
-            <span>Low (2-4)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#65a30d' }} />
-            <span>Minimal (1)</span>
-          </div>
+          {[
+            { color: '#dc2626', label: 'Critical (P1)' },
+            { color: '#ea580c', label: 'High (10+)' },
+            { color: '#d97706', label: 'Medium (5-9)' },
+            { color: '#ca8a04', label: 'Low (2-4)' },
+            { color: '#65a30d', label: 'Minimal (1)' },
+          ].map(({ color, label }) => (
+            <div key={label} className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
+              <span>{label}</span>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -368,10 +436,7 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
               key={priority}
               variant="outline"
               className="text-xs"
-              style={{
-                borderColor: getPriorityColor(priority),
-                color: getPriorityColor(priority),
-              }}
+              style={{ borderColor: PRIORITY_COLORS[priority], color: PRIORITY_COLORS[priority] }}
             >
               {priority}: {alertCounts[priority] || 0}
             </Badge>
@@ -379,21 +444,36 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
         </div>
       </div>
 
-      {/* Mapbox CSS for popups */}
+      {/* Popup styles */}
       <style>{`
         .mapboxgl-popup-content {
           background: hsl(var(--card));
           border: 1px solid hsl(var(--border));
           border-radius: 8px;
           padding: 0;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          box-shadow: 0 4px 16px rgba(0,0,0,0.25);
         }
         .mapboxgl-popup-tip {
-          border-top-color: hsl(var(--card));
+          border-top-color: hsl(var(--card)) !important;
         }
-        @keyframes pulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
-          50% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+        .signal-popup-content {
+          padding: 10px 12px;
+          min-width: 160px;
+        }
+        .popup-header {
+          font-weight: 600;
+          font-size: 13px;
+          margin-bottom: 4px;
+        }
+        .popup-location {
+          font-size: 12px;
+          color: hsl(var(--muted-foreground));
+        }
+        .popup-source {
+          font-size: 11px;
+          color: hsl(var(--muted-foreground));
+          opacity: 0.7;
+          margin-top: 4px;
         }
       `}</style>
     </div>
