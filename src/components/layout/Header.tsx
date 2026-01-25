@@ -11,7 +11,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Shield, Bell, User, LogOut, Settings, Moon, Sun } from 'lucide-react';
+import { Bell, User, LogOut, Settings, Moon, Sun } from 'lucide-react';
+import whoAfroLogo from '@/assets/who-afro-logo.png';
 import { useState } from 'react';
 
 export function Header() {
@@ -42,10 +43,12 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
-          <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary">
-            <Shield className="w-5 h-5 text-primary-foreground" />
-          </div>
+        <Link to="/" className="flex items-center gap-3">
+          <img 
+            src={whoAfroLogo} 
+            alt="WHO African Region" 
+            className="w-10 h-10 rounded-full object-cover"
+          />
           <div className="hidden sm:block">
             <h1 className="text-lg font-bold leading-none">AFRO Sentinel</h1>
             <p className="text-xs text-muted-foreground">Watchtower</p>
