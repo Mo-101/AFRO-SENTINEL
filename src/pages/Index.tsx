@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react';
+import { Navigate } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { WelcomeHero } from '@/components/dashboard/WelcomeHero';
-import { StatsCards } from '@/components/dashboard/StatsCards';
 import { DashboardAnalytics } from '@/components/dashboard/DashboardAnalytics';
 import { SignalCard } from '@/components/signals/SignalCard';
 import { SignalModal } from '@/components/signals/SignalModal';
@@ -10,11 +9,12 @@ import { AlertsList } from '@/components/signals/AlertsList';
 import { RecentSignals } from '@/components/signals/RecentSignals';
 import { SourceRegistry } from '@/components/sources/SourceRegistry';
 import { AfricaMap } from '@/components/map/AfricaMap';
-import { AutoDetectionPopup, AutoDetection } from '@/components/alerts/AutoDetectionPopup';
+import { AutoDetectionPopup } from '@/components/alerts/AutoDetectionPopup';
 import { useAuth } from '@/hooks/useAuth';
 import { useSignals, Signal } from '@/hooks/useSignals';
+import { useRealtimeAlerts } from '@/hooks/useRealtimeAlerts';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LayoutDashboard, Radio, Database, Map as MapIcon } from 'lucide-react';
 
@@ -23,7 +23,9 @@ const Index = () => {
   const [selectedCountry, setSelectedCountry] = useState('AFRO Regional Panorama');
   const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [detections, setDetections] = useState<AutoDetection[]>([]);
+  
+  // Real-time P1/P2 alert system
+  const { alerts, dismissAlert } = useRealtimeAlerts({ enabled: true, playSound: true });
 
   // Filter signals by country if not regional view
   const signalFilters = useMemo(() => {
@@ -79,10 +81,6 @@ const Index = () => {
     return { timeline, diseaseDistribution };
   }, [signals]);
 
-  const handleDismissDetection = (id: string) => {
-    setDetections((prev) => prev.filter((d) => d.id !== id));
-  };
-
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -102,9 +100,10 @@ const Index = () => {
     );
   }
 
-  // Auth disabled for development - show full dashboard to everyone
-  // TODO: Re-enable auth check when ready:
-  // if (!user) { return <UnauthenticatedView />; }
+  // Redirect to auth if not authenticated
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
 
   // Authenticated full dashboard
   return (
@@ -263,8 +262,8 @@ const Index = () => {
       {/* Signal Detail Modal */}
       <SignalModal signal={selectedSignal} onClose={() => setSelectedSignal(null)} />
 
-      {/* Auto Detection Popups */}
-      <AutoDetectionPopup detections={detections} onDismiss={handleDismissDetection} />
+      {/* Real-time P1/P2 Alert Popups */}
+      <AutoDetectionPopup detections={alerts} onDismiss={dismissAlert} />
 
       {/* Footer */}
       <footer className="border-t py-2 px-6 bg-card/50">
