@@ -9,6 +9,7 @@ import { SignalModal } from '@/components/signals/SignalModal';
 import { AlertsList } from '@/components/signals/AlertsList';
 import { RecentSignals } from '@/components/signals/RecentSignals';
 import { SourceRegistry } from '@/components/sources/SourceRegistry';
+import { AfricaMap } from '@/components/map/AfricaMap';
 import { AutoDetectionPopup, AutoDetection } from '@/components/alerts/AutoDetectionPopup';
 import { useAuth } from '@/hooks/useAuth';
 import { useSignals, Signal } from '@/hooks/useSignals';
@@ -225,7 +226,7 @@ const Index = () => {
                 )}
 
                 {activeTab === 'map' && (
-                  <div className="space-y-6">
+                  <div className="space-y-6 h-full">
                     <div>
                       <h1 className="text-2xl font-black text-foreground uppercase tracking-tight">
                         Geospatial View
@@ -234,17 +235,13 @@ const Index = () => {
                         Interactive Africa choropleth with outbreak markers
                       </p>
                     </div>
-                    <div className="h-[600px] rounded-2xl border bg-muted/30 flex items-center justify-center">
-                      <div className="text-center p-8">
-                        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                          🗺️
-                        </div>
-                        <h3 className="text-lg font-semibold mb-2">Interactive Map</h3>
-                        <p className="text-sm text-muted-foreground max-w-xs">
-                          Africa choropleth with outbreak markers coming soon.
-                          Fly-to animations on signal selection.
-                        </p>
-                      </div>
+                    <div className="h-[calc(100vh-280px)] min-h-[500px]">
+                      <AfricaMap
+                        signals={filteredSignals}
+                        selectedSignal={selectedSignal}
+                        onSignalSelect={setSelectedSignal}
+                        onCountrySelect={setSelectedCountry}
+                      />
                     </div>
                   </div>
                 )}
