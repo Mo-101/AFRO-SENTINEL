@@ -33,6 +33,71 @@ const COUNTRY_NAME_TO_ISO3: Record<string, string> = {
 };
 
 // =====================================================
+// CONTENT FILTER - REJECT POLITICAL/POLICY NEWS
+// Only accept actual outbreak/disease signals
+// =====================================================
+
+// Keywords that indicate POLITICAL/POLICY content (NOT actual outbreaks)
+const EXCLUSION_KEYWORDS = [
+  // Political figures and actions
+  "trump", "biden", "president withdraw", "withdrawal from who", "kuiondoa marekani",
+  "leaving who", "defund who", "who funding", "who membership", "un membership",
+  "congress", "senate", "legislation", "bill passed", "executive order",
+  "white house", "state department", "foreign policy", "diplomatic",
+  
+  // Policy and administrative
+  "policy change", "budget cut", "funding decision", "reform proposal",
+  "treaty", "agreement signed", "summit", "conference outcome", "resolution passed",
+  "ministerial meeting", "cabinet decision", "parliamentary",
+  
+  // General political
+  "election", "campaign", "political party", "opposition leader", "coalition",
+  "government statement", "press conference", "official visit", "bilateral talks",
+  
+  // Non-outbreak health policy
+  "health insurance", "healthcare reform", "hospital funding", "medical school",
+  "doctor shortage", "nurse strike", "pharmaceutical pricing", "drug approval",
+  "clinical trial results", "research grant", "medical conference",
+  
+  // Swahili political terms
+  "siasa", "uchaguzi", "serikali imetangaza", "mkutano wa viongozi",
+  "mkataba", "bajeti", "sheria mpya",
+  
+  // Hausa political terms
+  "siyasa", "zabe", "gwamnati ta sanar", "taron shugabanni",
+  
+  // French political terms (for francophone Africa)
+  "politique", "élection", "gouvernement annonce", "sommet", "traité",
+  "réforme sanitaire", "budget santé"
+];
+
+// Keywords that MUST be present for actual outbreak signals
+const REQUIRED_OUTBREAK_INDICATORS = {
+  en: [
+    "outbreak", "cases", "deaths", "infected", "diagnosed", "hospitalized",
+    "patients", "confirmed", "suspected", "epidemic", "endemic", "spread",
+    "transmission", "cluster", "surge", "alert", "emergency", "quarantine",
+    "isolation", "symptoms", "fatalities", "mortality", "morbidity"
+  ],
+  ha: [
+    "annobar", "masu fama", "mutuwa", "kamuwa", "asibiti", "marasa lafiya",
+    "tabbatacce", "yadu", "tsanani", "keɓewa"
+  ],
+  yo: [
+    "ajakale", "olugbẹ", "iku", "akoran", "ile-iwosan", "alaisan",
+    "jẹrisi", "ntan", "pajawiri", "ya sọtọ"
+  ],
+  sw: [
+    "mlipuko", "wagonjwa", "vifo", "maambukizi", "hospitalini", "wagonjwa",
+    "kuthibitishwa", "kuenea", "dharura", "karantini", "dalili"
+  ],
+  fr: [
+    "épidémie", "cas", "décès", "infectés", "hospitalisés", "patients",
+    "confirmés", "suspects", "propagation", "urgence", "quarantaine"
+  ]
+};
+
+// =====================================================
 // LINGUA FIDELITY ENGINE - MULTILINGUAL DISEASE KEYWORDS
 // Hausa (ha), Yoruba (yo), Swahili (sw) + English
 // =====================================================
@@ -693,6 +758,73 @@ function detectDisease(text: string): { name: string; category: string; priority
   return null;
 }
 
+// =====================================================
+// CONTENT QUALITY FILTER - Reject non-outbreak content
+// =====================================================
+
+// Check if text contains EXCLUSION keywords (political/policy content)
+function containsExclusionKeywords(text: string): { excluded: boolean; reason: string } {
+  const lowerText = text.toLowerCase();
+  
+  for (const keyword of EXCLUSION_KEYWORDS) {
+    if (lowerText.includes(keyword.toLowerCase())) {
+      return { 
+        excluded: true, 
+        reason: `Contains excluded keyword: "${keyword}"` 
+      };
+    }
+  }
+  
+  return { excluded: false, reason: '' };
+}
+
+// Check if text contains REQUIRED outbreak indicators
+function containsOutbreakIndicators(text: string): { valid: boolean; matchedIndicators: string[] } {
+  const lowerText = text.toLowerCase();
+  const matchedIndicators: string[] = [];
+  
+  for (const [lang, indicators] of Object.entries(REQUIRED_OUTBREAK_INDICATORS)) {
+    for (const indicator of indicators) {
+      if (lowerText.includes(indicator.toLowerCase())) {
+        matchedIndicators.push(`${lang}:${indicator}`);
+      }
+    }
+  }
+  
+  return {
+    valid: matchedIndicators.length >= 1, // At least one indicator required
+    matchedIndicators
+  };
+}
+
+// Combined content filter
+function isValidOutbreakSignal(text: string): { 
+  valid: boolean; 
+  reason: string;
+  matchedIndicators?: string[];
+} {
+  // Step 1: Check for exclusion keywords
+  const exclusionCheck = containsExclusionKeywords(text);
+  if (exclusionCheck.excluded) {
+    return { valid: false, reason: exclusionCheck.reason };
+  }
+  
+  // Step 2: Check for required outbreak indicators
+  const indicatorCheck = containsOutbreakIndicators(text);
+  if (!indicatorCheck.valid) {
+    return { 
+      valid: false, 
+      reason: 'No outbreak indicators found (cases, deaths, symptoms, etc.)' 
+    };
+  }
+  
+  return { 
+    valid: true, 
+    reason: 'Valid outbreak signal',
+    matchedIndicators: indicatorCheck.matchedIndicators 
+  };
+}
+
 function generateHash(text: string): string {
   let hash = 0;
   for (let i = 0; i < text.length; i++) {
@@ -1064,8 +1196,26 @@ async function analyzeSignal(text: string): Promise<any> {
   const deployment = Deno.env.get('AZURE_OPENAI_DEPLOYMENT');
   const apiVersion = Deno.env.get('AZURE_OPENAI_API_VERSION') || '2024-12-01-preview';
   
-  const systemPrompt = `You are an epidemiologist analyzing disease signals from Africa. Extract and return JSON:
+  const systemPrompt = `You are an epidemiologist analyzing disease outbreak signals from Africa.
+
+CRITICAL FILTER: REJECT any content that is:
+- Political news (government decisions, policy changes, WHO membership/funding discussions)
+- Administrative health news (hospital funding, healthcare reform, medical education)
+- General news mentioning health topics without actual disease cases/deaths
+- Conference announcements, research papers, or clinical trial news
+
+ONLY ACCEPT signals about ACTUAL disease outbreaks with:
+- Confirmed or suspected cases of illness
+- Deaths from disease
+- Ongoing transmission or spread
+- Active public health emergencies
+
+If the text is about policy/politics/administration rather than an actual outbreak, return:
+{"is_outbreak": false, "rejection_reason": "policy/political content"}
+
+For valid outbreak signals, extract and return JSON:
 {
+  "is_outbreak": true,
   "disease_name": "string or null",
   "disease_category": "vhf|respiratory|enteric|vector_borne|zoonotic|vaccine_preventable|environmental|unknown",
   "priority": "P1|P2|P3|P4",
@@ -2584,17 +2734,41 @@ serve(async (req) => {
       existingHashes.add(generateHash(signal.original_text));
     }
     
-    const newSignals = allSignals.filter(s => !existingHashes.has(s.duplicate_hash));
+    // STEP 1: Apply content filter BEFORE deduplication for efficiency
+    const contentFilteredSignals = allSignals.filter(s => {
+      const filterResult = isValidOutbreakSignal(s.original_text);
+      if (!filterResult.valid) {
+        console.log(`REJECTED: "${s.original_text.substring(0, 80)}..." - ${filterResult.reason}`);
+      }
+      return filterResult.valid;
+    });
+    
+    console.log(`${contentFilteredSignals.length} signals after content filter (${allSignals.length - contentFilteredSignals.length} rejected)`);
+    
+    // STEP 2: Deduplicate by hash
+    const newSignals = contentFilteredSignals.filter(s => !existingHashes.has(s.duplicate_hash));
     console.log(`${newSignals.length} new signals after dedup`);
     
-    // Analyze and insert signals
+    // STEP 3: Analyze and insert signals
     const insertedSignals: any[] = [];
+    const rejectedByAI: any[] = [];
     
     for (const signal of newSignals.slice(0, 20)) { // Limit to 20 per run
       // AI-enhanced analysis for signals without disease classification
       if (!signal.disease_name || signal.disease_category === 'unknown') {
         const analysis = await analyzeSignal(signal.original_text);
-        if (analysis) {
+        
+        // Check if AI rejected the signal as non-outbreak content
+        if (analysis && analysis.is_outbreak === false) {
+          console.log(`AI REJECTED: "${signal.original_text.substring(0, 80)}..." - ${analysis.rejection_reason || 'Not an outbreak'}`);
+          rejectedByAI.push({
+            text: signal.original_text.substring(0, 100),
+            reason: analysis.rejection_reason
+          });
+          continue; // Skip this signal
+        }
+        
+        if (analysis && analysis.is_outbreak !== false) {
           signal.disease_name = analysis.disease_name || signal.disease_name;
           signal.disease_category = analysis.disease_category || signal.disease_category;
           signal.priority = analysis.priority || signal.priority;
@@ -2622,14 +2796,17 @@ serve(async (req) => {
       }
     }
     
-    console.log(`Inserted ${insertedSignals.length} signals`);
+    console.log(`Inserted ${insertedSignals.length} signals, AI rejected ${rejectedByAI.length}`);
     
     return new Response(
       JSON.stringify({
         success: true,
         fetched: allSignals.length,
+        content_filtered: contentFilteredSignals.length,
+        rejected_by_filter: allSignals.length - contentFilteredSignals.length,
         deduplicated: newSignals.length,
         inserted: insertedSignals.length,
+        rejected_by_ai: rejectedByAI.length,
         signals: insertedSignals,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
