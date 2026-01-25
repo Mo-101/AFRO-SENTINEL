@@ -5,7 +5,8 @@ import { Signal } from '@/hooks/useSignals';
 import { MAPBOX_TOKEN, AFRO_COUNTRIES } from '@/lib/constants';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Layers, ZoomIn, ZoomOut, Locate, AlertTriangle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Layers, ZoomIn, ZoomOut, Locate, AlertTriangle, Wind } from 'lucide-react';
 
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
@@ -64,6 +65,7 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
   const popup = useRef<mapboxgl.Popup | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [showMarkers, setShowMarkers] = useState(true);
+  const [showWindLayer, setShowWindLayer] = useState(false);
 
   // Compute country-level statistics
   const countryStats = useCallback(() => {
@@ -105,6 +107,51 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
     map.current.on('load', () => {
       const m = map.current!;
       setMapLoaded(true);
+
+      // === WIND PARTICLE LAYER ===
+      m.addSource('raster-array-source', {
+        type: 'raster-array',
+        url: 'mapbox://rasterarrayexamples.gfs-winds',
+        tileSize: 512,
+      });
+
+      m.addLayer({
+        id: 'wind-layer',
+        type: 'raster-particle',
+        source: 'raster-array-source',
+        'source-layer': '10winds',
+        layout: {
+          visibility: 'none', // Hidden by default
+        },
+        paint: {
+          'raster-particle-speed-factor': 0.4,
+          'raster-particle-fade-opacity-factor': 0.9,
+          'raster-particle-reset-rate-factor': 0.4,
+          'raster-particle-count': 4000,
+          'raster-particle-max-speed': 40,
+          'raster-particle-color': [
+            'interpolate',
+            ['linear'],
+            ['raster-particle-speed'],
+            1.5, 'rgba(134,163,171,255)',
+            2.5, 'rgba(126,152,188,255)',
+            4.12, 'rgba(110,143,208,255)',
+            6.17, 'rgba(15,147,167,255)',
+            9.26, 'rgba(57,163,57,255)',
+            11.83, 'rgba(194,134,62,255)',
+            14.92, 'rgba(200,66,13,255)',
+            18.0, 'rgba(210,0,50,255)',
+            21.6, 'rgba(175,80,136,255)',
+            25.21, 'rgba(117,74,147,255)',
+            29.32, 'rgba(68,105,141,255)',
+            33.44, 'rgba(194,251,119,255)',
+            43.72, 'rgba(241,255,109,255)',
+            50.41, 'rgba(255,255,255,255)',
+            59.16, 'rgba(0,255,255,255)',
+            69.44, 'rgba(255,37,255,255)',
+          ],
+        },
+      });
 
       // === CHOROPLETH: Country boundaries ===
       m.addSource('africa-countries', {
@@ -347,6 +394,18 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
     });
   }, [showMarkers, mapLoaded]);
 
+  // Toggle wind layer visibility
+  useEffect(() => {
+    if (!map.current || !mapLoaded || !map.current.isStyleLoaded()) return;
+    try {
+      if (map.current.getLayer('wind-layer')) {
+        map.current.setLayoutProperty('wind-layer', 'visibility', showWindLayer ? 'visible' : 'none');
+      }
+    } catch (e) {
+      // Ignore if style not ready
+    }
+  }, [showWindLayer, mapLoaded]);
+
   // Fly to selected signal
   useEffect(() => {
     if (!map.current || !mapLoaded || !selectedSignal) return;
@@ -404,14 +463,32 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
         <Button size="icon" variant="secondary" onClick={handleReset} className="h-8 w-8 bg-card/90 backdrop-blur">
           <Locate className="h-4 w-4" />
         </Button>
-        <Button
-          size="icon"
-          variant={showMarkers ? 'default' : 'secondary'}
-          onClick={() => setShowMarkers(!showMarkers)}
-          className="h-8 w-8 bg-card/90 backdrop-blur"
-        >
-          <Layers className="h-4 w-4" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="icon"
+              variant={showMarkers ? 'default' : 'secondary'}
+              onClick={() => setShowMarkers(!showMarkers)}
+              className="h-8 w-8 bg-card/90 backdrop-blur"
+            >
+              <Layers className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="left">Toggle Signal Markers</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="icon"
+              variant={showWindLayer ? 'default' : 'secondary'}
+              onClick={() => setShowWindLayer(!showWindLayer)}
+              className="h-8 w-8 bg-card/90 backdrop-blur"
+            >
+              <Wind className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="left">Toggle Wind Patterns</TooltipContent>
+        </Tooltip>
       </div>
 
       {/* Legend */}
