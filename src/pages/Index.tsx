@@ -101,26 +101,9 @@ const Index = () => {
     );
   }
 
-  // Unauthenticated view
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="container py-6">
-          <WelcomeHero />
-          <section className="mt-12">
-            <StatsCards />
-          </section>
-        </main>
-        <footer className="border-t mt-12">
-          <div className="container py-6 text-center text-sm text-muted-foreground">
-            <p className="text-gradient-african font-medium">AFRO Sentinel Watchtower</p>
-            <p className="mt-1">Early warning over certainty. Every signal surfaced could be a life saved.</p>
-          </div>
-        </footer>
-      </div>
-    );
-  }
+  // Auth disabled for development - show full dashboard to everyone
+  // TODO: Re-enable auth check when ready:
+  // if (!user) { return <UnauthenticatedView />; }
 
   // Authenticated full dashboard
   return (
