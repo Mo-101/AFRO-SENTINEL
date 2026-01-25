@@ -3,10 +3,7 @@ import { TriageWorkflow } from '@/components/triage/TriageWorkflow';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Shield, AlertTriangle } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Shield } from 'lucide-react';
 
 export default function Analyst() {
   const { user, loading, isAnalyst, isAdmin } = useAuth();
@@ -31,9 +28,14 @@ export default function Analyst() {
     );
   }
 
-  // For development, show triage to everyone but with a warning
-  // TODO: Re-enable proper auth check: if (!user || (!isAnalyst && !isAdmin))
-  const showDevWarning = !user;
+  // Require authentication and analyst role
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  if (!isAnalyst && !isAdmin) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -56,26 +58,6 @@ export default function Analyst() {
             </p>
           </div>
         </div>
-
-        {/* Dev Warning */}
-        {showDevWarning && (
-          <Card className="mb-6 border-amber-500/30 bg-amber-500/5">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="w-5 h-5 text-amber-500" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-amber-500">Development Mode</p>
-                  <p className="text-xs text-muted-foreground">
-                    Authentication is disabled for development. In production, only Analysts and Admins can access this page.
-                  </p>
-                </div>
-                <Button asChild variant="outline" size="sm">
-                  <Link to="/auth">Sign In</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Triage Workflow */}
         <TriageWorkflow />
