@@ -33,67 +33,172 @@ const COUNTRY_NAME_TO_ISO3: Record<string, string> = {
 };
 
 // =====================================================
-// CONTENT FILTER - REJECT POLITICAL/POLICY NEWS
-// Only accept actual outbreak/disease signals
+// 🔥 SURGICAL NOISE FILTER - AFRO SENTINEL WATCHTOWER
+// "If it's not about PEOPLE GETTING SICK or DYING from disease — it's noise."
+// Ported from Python NoiseFilter v2.0
 // =====================================================
 
-// Keywords that indicate POLITICAL/POLICY content (NOT actual outbreaks)
-const EXCLUSION_KEYWORDS = [
-  // Political figures and actions
-  "trump", "biden", "president withdraw", "withdrawal from who", "kuiondoa marekani",
-  "leaving who", "defund who", "who funding", "who membership", "un membership",
-  "congress", "senate", "legislation", "bill passed", "executive order",
-  "white house", "state department", "foreign policy", "diplomatic",
-  
-  // Policy and administrative
-  "policy change", "budget cut", "funding decision", "reform proposal",
-  "treaty", "agreement signed", "summit", "conference outcome", "resolution passed",
-  "ministerial meeting", "cabinet decision", "parliamentary",
-  
-  // General political
-  "election", "campaign", "political party", "opposition leader", "coalition",
-  "government statement", "press conference", "official visit", "bilateral talks",
-  
-  // Non-outbreak health policy
-  "health insurance", "healthcare reform", "hospital funding", "medical school",
-  "doctor shortage", "nurse strike", "pharmaceutical pricing", "drug approval",
-  "clinical trial results", "research grant", "medical conference",
-  
-  // Swahili political terms
-  "siasa", "uchaguzi", "serikali imetangaza", "mkutano wa viongozi",
-  "mkataba", "bajeti", "sheria mpya",
-  
-  // Hausa political terms
-  "siyasa", "zabe", "gwamnati ta sanar", "taron shugabanni",
-  
-  // French political terms (for francophone Africa)
-  "politique", "élection", "gouvernement annonce", "sommet", "traité",
-  "réforme sanitaire", "budget santé"
+// POLITICAL FIGURES AND OFFICES - AUTO REJECT
+const POLITICAL_FIGURES = [
+  // US Politics
+  "trump", "biden", "desantis", "obama", "pence", "kamala", "harris",
+  "pompeo", "blinken", "kennedy jr", "rfk", "vivek", "ramaswamy",
+  "maga", "republican", "democrat", "gop",
+  // Offices
+  "white house", "oval office", "congress", "senate", "house of representatives",
+  "capitol hill", "state department", "pentagon",
+  // International political figures
+  "macron", "scholz", "sunak", "putin", "xi jinping", "modi",
+  "prime minister", "chancellor"
 ];
 
-// Keywords that MUST be present for actual outbreak signals
-const REQUIRED_OUTBREAK_INDICATORS = {
-  en: [
-    "outbreak", "cases", "deaths", "infected", "diagnosed", "hospitalized",
-    "patients", "confirmed", "suspected", "epidemic", "endemic", "spread",
-    "transmission", "cluster", "surge", "alert", "emergency", "quarantine",
-    "isolation", "symptoms", "fatalities", "mortality", "morbidity"
-  ],
+// POLITICAL ACTION VERBS - NOT outbreak verbs
+const POLITICAL_ACTIONS = [
+  "withdraws", "withdrawal", "withdrew", "pulls out", "pulled out",
+  "defunds", "defunding", "defunded", "cuts funding", "funding cut",
+  "sanctions", "sanctioned", "vetoes", "vetoed", "veto",
+  "signs executive order", "executive order", "executive action",
+  "passes bill", "bill passed", "legislation", "legislative",
+  "announces policy", "policy change", "new policy",
+  "reforms", "reform plan", "restructuring",
+  "appoints", "appointed", "nomination", "nominates",
+  "fires", "fired", "dismisses", "dismissed",
+  "threatens", "threatened to",
+  "criticizes", "criticized", "slams", "blasts",
+  "supports", "endorses", "backs", "opposes", "opposition to"
+];
+
+// INSTITUTIONAL/ORGANIZATIONAL DRAMA
+const INSTITUTIONAL_NOISE = [
+  "who reform", "un reform", "reform the who", "reform the un",
+  "who leadership", "who director", "tedros", "director-general",
+  "un secretary", "secretary general", "guterres",
+  "who budget", "un budget", "funding crisis", "budget crisis",
+  "member states", "general assembly", "security council",
+  "treaty", "agreement", "accord", "pact", "deal",
+  "summit", "conference", "meeting of", "annual meeting",
+  "diplomatic", "diplomacy", "bilateral", "multilateral",
+  "geopolitical", "foreign policy", "international relations",
+  // Swahili political terms
+  "kuiondoa marekani", "siasa", "uchaguzi", "serikali imetangaza", "mkutano wa viongozi",
+  // Hausa political terms
+  "siyasa", "zabe", "gwamnati ta sanar", "taron shugabanni",
+  // French political terms
+  "politique", "élection", "gouvernement annonce", "sommet", "traité"
+];
+
+// OPINION/COMMENTARY MARKERS - Editorial content
+const OPINION_MARKERS = [
+  "opinion:", "editorial:", "op-ed:", "commentary:",
+  "analysis:", "perspective:", "viewpoint:",
+  "critics say", "experts warn about policy", "analysts say",
+  "according to critics", "opponents argue", "supporters claim",
+  "controversial", "debate over", "debate about",
+  "should be", "must be", "needs to be", "ought to"
+];
+
+// FUNDING/BUDGET (without outbreak context) - Policy noise
+const FUNDING_NOISE = [
+  "funding", "budget", "financial", "fiscal",
+  "billion dollar", "million dollar", "cost of",
+  "investment", "spending", "expenditure",
+  "grant awarded", "donation", "contribution",
+  "economic impact", "financial impact"
+];
+
+// ALL POLITICAL NOISE COMBINED
+const ALL_POLITICAL_NOISE = [
+  ...POLITICAL_FIGURES,
+  ...POLITICAL_ACTIONS,
+  ...INSTITUTIONAL_NOISE,
+  ...OPINION_MARKERS
+];
+
+// OUTBREAK INDICATORS - REQUIRED for acceptance
+const CASE_INDICATORS = [
+  "cases", "case", "infections", "infection", "infected",
+  "patients", "patient", "sick", "ill", "illness",
+  "hospitalized", "hospitalised", "admitted", "admission",
+  "diagnosed", "diagnosis", "confirmed case", "confirmed cases",
+  "suspected case", "suspected cases", "probable case",
+  "positive", "tested positive", "test positive"
+];
+
+const DEATH_INDICATORS = [
+  "deaths", "death", "died", "dead", "dying",
+  "fatalities", "fatality", "fatal", "mortality",
+  "killed", "kills", "claimed lives", "lost lives",
+  "death toll", "body count", "corpses"
+];
+
+const OUTBREAK_LANGUAGE = [
+  "outbreak", "outbreaks", "epidemic", "epidemics",
+  "pandemic", "endemic", "surge", "surges", "surging",
+  "spike", "spikes", "spiking", "uptick",
+  "cluster", "clusters", "clustering",
+  "spreading", "spread", "spreads", "transmission",
+  "detected", "detection", "reported", "reports",
+  "emerged", "emerging", "emergence",
+  "resurgence", "resurging", "wave", "new wave"
+];
+
+// HEALTHCARE STRAIN - Accept even without named disease
+const HEALTHCARE_STRAIN = [
+  "hospitals overwhelmed", "hospital overwhelmed", "overwhelmed",
+  "wards full", "ward full", "beds full", "no beds",
+  "shortage of beds", "bed shortage", "at capacity",
+  "healthcare workers infected", "health workers infected",
+  "medical staff infected", "doctors infected", "nurses infected",
+  "icu full", "icu capacity", "ventilator shortage",
+  "morgue full", "morgues full", "overwhelmed morgue",
+  "emergency response", "rapid response", "response team",
+  "quarantine", "quarantined", "isolation", "isolated",
+  "lockdown", "containment", "contact tracing",
+  "stretched thin", "under pressure", "overburdened"
+];
+
+// SYMPTOM CLUSTERS - For unknown disease detection
+const SYMPTOM_INDICATORS = [
+  "fever", "fevers", "high fever",
+  "bleeding", "hemorrhage", "hemorrhagic",
+  "vomiting", "vomit", "diarrhea", "diarrhoea",
+  "rash", "rashes", "lesions", "sores",
+  "cough", "coughing", "respiratory",
+  "paralysis", "paralyzed", "weakness",
+  "seizures", "convulsions",
+  "jaundice", "yellow eyes",
+  "dehydration", "dehydrated"
+];
+
+// ALL OUTBREAK INDICATORS COMBINED
+const ALL_OUTBREAK_INDICATORS = [
+  ...CASE_INDICATORS,
+  ...DEATH_INDICATORS,
+  ...OUTBREAK_LANGUAGE,
+  ...SYMPTOM_INDICATORS
+];
+
+// MULTILINGUAL OUTBREAK INDICATORS - For grassroots signals
+const REQUIRED_OUTBREAK_INDICATORS_MULTILINGUAL: Record<string, string[]> = {
+  en: [...CASE_INDICATORS, ...DEATH_INDICATORS, ...OUTBREAK_LANGUAGE],
   ha: [
     "annobar", "masu fama", "mutuwa", "kamuwa", "asibiti", "marasa lafiya",
-    "tabbatacce", "yadu", "tsanani", "keɓewa"
+    "tabbatacce", "yadu", "tsanani", "keɓewa", "mace", "cututtuka"
   ],
   yo: [
     "ajakale", "olugbẹ", "iku", "akoran", "ile-iwosan", "alaisan",
-    "jẹrisi", "ntan", "pajawiri", "ya sọtọ"
+    "jẹrisi", "ntan", "pajawiri", "ya sọtọ", "àrùn"
   ],
   sw: [
-    "mlipuko", "wagonjwa", "vifo", "maambukizi", "hospitalini", "wagonjwa",
-    "kuthibitishwa", "kuenea", "dharura", "karantini", "dalili"
+    "mlipuko", "wagonjwa", "vifo", "maambukizi", "hospitalini",
+    "kuthibitishwa", "kuenea", "dharura", "karantini", "dalili", "maiti"
   ],
   fr: [
     "épidémie", "cas", "décès", "infectés", "hospitalisés", "patients",
-    "confirmés", "suspects", "propagation", "urgence", "quarantaine"
+    "confirmés", "suspects", "propagation", "urgence", "quarantaine", "morts"
+  ],
+  am: [
+    "ወረርሽኝ", "ሞት", "በሽታ", "ታማሚዎች", "ሆስፒታል"
   ]
 };
 
@@ -759,69 +864,147 @@ function detectDisease(text: string): { name: string; category: string; priority
 }
 
 // =====================================================
-// CONTENT QUALITY FILTER - Reject non-outbreak content
+// 🔥 SURGICAL NOISE FILTER FUNCTIONS - v2.0
+// Multi-step filtering with word boundary matching
 // =====================================================
 
-// Check if text contains EXCLUSION keywords (political/policy content)
-function containsExclusionKeywords(text: string): { excluded: boolean; reason: string } {
-  const lowerText = text.toLowerCase();
-  
-  for (const keyword of EXCLUSION_KEYWORDS) {
-    if (lowerText.includes(keyword.toLowerCase())) {
-      return { 
-        excluded: true, 
-        reason: `Contains excluded keyword: "${keyword}"` 
-      };
-    }
-  }
-  
-  return { excluded: false, reason: '' };
+// Find all matches with word boundary matching for accuracy
+function findMatches(text: string, keywords: string[]): string[] {
+  const textLower = text.toLowerCase();
+  return keywords.filter(kw => {
+    // Escape special regex characters and use word boundaries
+    const pattern = new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    return pattern.test(textLower);
+  });
 }
 
-// Check if text contains REQUIRED outbreak indicators
-function containsOutbreakIndicators(text: string): { valid: boolean; matchedIndicators: string[] } {
-  const lowerText = text.toLowerCase();
-  const matchedIndicators: string[] = [];
+// Check if text contains POLITICAL NOISE keywords
+function containsPoliticalNoise(text: string): { hasPolitical: boolean; matches: string[] } {
+  const matches = findMatches(text, ALL_POLITICAL_NOISE);
+  return { hasPolitical: matches.length > 0, matches };
+}
+
+// Check if text contains FUNDING NOISE without outbreak context
+function containsFundingNoise(text: string): { hasFunding: boolean; matches: string[] } {
+  const matches = findMatches(text, FUNDING_NOISE);
+  return { hasFunding: matches.length > 0, matches };
+}
+
+// Check if text contains OUTBREAK INDICATORS
+function containsOutbreakIndicators(text: string): { hasOutbreak: boolean; matches: string[]; hasNumbers: boolean } {
+  const textLower = text.toLowerCase();
+  const matches = findMatches(text, ALL_OUTBREAK_INDICATORS);
   
-  for (const [lang, indicators] of Object.entries(REQUIRED_OUTBREAK_INDICATORS)) {
+  // Also check for multilingual indicators
+  for (const [_lang, indicators] of Object.entries(REQUIRED_OUTBREAK_INDICATORS_MULTILINGUAL)) {
     for (const indicator of indicators) {
-      if (lowerText.includes(indicator.toLowerCase())) {
-        matchedIndicators.push(`${lang}:${indicator}`);
+      if (textLower.includes(indicator.toLowerCase()) && !matches.includes(indicator)) {
+        matches.push(indicator);
       }
     }
   }
   
-  return {
-    valid: matchedIndicators.length >= 1, // At least one indicator required
-    matchedIndicators
-  };
+  // Check for numbers associated with cases/deaths
+  const hasNumbers = /\b(\d+)\s*(cases?|deaths?|infected|patients?|killed|died|fatalities)\b/i.test(text);
+  
+  return { hasOutbreak: matches.length > 0, matches, hasNumbers };
 }
 
-// Combined content filter
+// Check for HEALTHCARE STRAIN signals
+function containsHealthcareStrain(text: string): { hasStrain: boolean; matches: string[] } {
+  const matches = findMatches(text, HEALTHCARE_STRAIN);
+  return { hasStrain: matches.length > 0, matches };
+}
+
+// Check for SYMPTOM CLUSTERS (possible unknown outbreak)
+function containsSymptomCluster(text: string): { hasSymptoms: boolean; matches: string[] } {
+  const matches = findMatches(text, SYMPTOM_INDICATORS);
+  return { hasSymptoms: matches.length >= 2, matches }; // Need 2+ symptoms
+}
+
+// 🔥 MAIN SURGICAL FILTER - Multi-step validation
 function isValidOutbreakSignal(text: string): { 
   valid: boolean; 
   reason: string;
   matchedIndicators?: string[];
+  filterStage?: string;
 } {
-  // Step 1: Check for exclusion keywords
-  const exclusionCheck = containsExclusionKeywords(text);
-  if (exclusionCheck.excluded) {
-    return { valid: false, reason: exclusionCheck.reason };
+  if (!text || text.trim().length < 10) {
+    return { valid: false, reason: 'Signal too short or empty', filterStage: 'length' };
   }
   
-  // Step 2: Check for required outbreak indicators
-  const indicatorCheck = containsOutbreakIndicators(text);
-  if (!indicatorCheck.valid) {
+  // ━━━ STEP 1: Check for POLITICAL NOISE ━━━
+  const politicalCheck = containsPoliticalNoise(text);
+  if (politicalCheck.hasPolitical) {
+    // But check if there are STRONG outbreak indicators that override
+    const outbreakCheck = containsOutbreakIndicators(text);
+    
+    // Political content WITHOUT strong outbreak evidence = REJECT
+    if (!outbreakCheck.hasOutbreak || !outbreakCheck.hasNumbers) {
+      return { 
+        valid: false, 
+        reason: `Political noise without outbreak indicators: ${politicalCheck.matches.slice(0, 3).join(', ')}`,
+        filterStage: 'political'
+      };
+    }
+    // If we have BOTH political AND strong outbreak indicators, continue (edge case)
+  }
+  
+  // ━━━ STEP 2: Check for FUNDING/BUDGET NOISE ━━━
+  const fundingCheck = containsFundingNoise(text);
+  if (fundingCheck.hasFunding) {
+    const outbreakCheck = containsOutbreakIndicators(text);
+    // Funding news WITHOUT outbreak context = REJECT
+    if (!outbreakCheck.hasOutbreak) {
+      return { 
+        valid: false, 
+        reason: `Funding/policy news without disease outbreak context`,
+        filterStage: 'funding'
+      };
+    }
+  }
+  
+  // ━━━ STEP 3: REQUIRE OUTBREAK INDICATORS ━━━
+  const outbreakCheck = containsOutbreakIndicators(text);
+  
+  // ━━━ STEP 4: Check for HEALTHCARE STRAIN (special case) ━━━
+  const strainCheck = containsHealthcareStrain(text);
+  if (strainCheck.hasStrain) {
+    // Healthcare strain signals are ALWAYS important
     return { 
-      valid: false, 
-      reason: 'No outbreak indicators found (cases, deaths, symptoms, etc.)' 
+      valid: true, 
+      reason: '⚠️ Healthcare strain signal - hospitals/system under pressure',
+      matchedIndicators: strainCheck.matches,
+      filterStage: 'healthcare_strain'
     };
   }
   
+  // ━━━ STEP 5: Check for SYMPTOM CLUSTERS (unknown outbreak) ━━━
+  const symptomCheck = containsSymptomCluster(text);
+  if (symptomCheck.hasSymptoms) {
+    return { 
+      valid: true, 
+      reason: '⚠️ Symptom cluster detected - possible unknown illness',
+      matchedIndicators: symptomCheck.matches,
+      filterStage: 'symptom_cluster'
+    };
+  }
+  
+  // ━━━ STEP 6: Standard outbreak indicator check ━━━
+  if (!outbreakCheck.hasOutbreak) {
+    return { 
+      valid: false, 
+      reason: 'No outbreak indicators found (cases, deaths, symptoms, etc.)',
+      filterStage: 'no_indicators'
+    };
+  }
+  
+  // ✅ SIGNAL IS VALID
   return { 
     valid: true, 
-    reason: 'Valid outbreak signal',
-    matchedIndicators: indicatorCheck.matchedIndicators 
+    reason: '✅ Valid outbreak signal',
+    matchedIndicators: outbreakCheck.matches,
+    filterStage: 'accepted'
   };
 }
 
