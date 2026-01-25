@@ -6,6 +6,86 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// =====================================================
+// 🔥 STRUCTURED LOGGER - AFRO SENTINEL WATCHTOWER
+// Levels: DEBUG < INFO < WARN < ERROR
+// =====================================================
+type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
+
+interface LogEntry {
+  timestamp: string;
+  level: LogLevel;
+  component: string;
+  message: string;
+  metadata?: Record<string, unknown>;
+}
+
+const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
+  DEBUG: 0,
+  INFO: 1,
+  WARN: 2,
+  ERROR: 3,
+};
+
+// Set minimum log level (can be configured via env)
+const MIN_LOG_LEVEL: LogLevel = (Deno.env.get('LOG_LEVEL') as LogLevel) || 'INFO';
+
+function shouldLog(level: LogLevel): boolean {
+  return LOG_LEVEL_PRIORITY[level] >= LOG_LEVEL_PRIORITY[MIN_LOG_LEVEL];
+}
+
+function formatLog(entry: LogEntry): string {
+  const emoji = {
+    DEBUG: '🔍',
+    INFO: '📋',
+    WARN: '⚠️',
+    ERROR: '🚨',
+  }[entry.level];
+  
+  const meta = entry.metadata ? ` | ${JSON.stringify(entry.metadata)}` : '';
+  return `${emoji} [${entry.level}] [${entry.component}] ${entry.message}${meta}`;
+}
+
+const logger = {
+  debug: (component: string, message: string, metadata?: Record<string, unknown>) => {
+    if (!shouldLog('DEBUG')) return;
+    const entry: LogEntry = { timestamp: new Date().toISOString(), level: 'DEBUG', component, message, metadata };
+    console.log(formatLog(entry));
+  },
+  
+  info: (component: string, message: string, metadata?: Record<string, unknown>) => {
+    if (!shouldLog('INFO')) return;
+    const entry: LogEntry = { timestamp: new Date().toISOString(), level: 'INFO', component, message, metadata };
+    console.log(formatLog(entry));
+  },
+  
+  warn: (component: string, message: string, metadata?: Record<string, unknown>) => {
+    if (!shouldLog('WARN')) return;
+    const entry: LogEntry = { timestamp: new Date().toISOString(), level: 'WARN', component, message, metadata };
+    console.warn(formatLog(entry));
+  },
+  
+  error: (component: string, message: string, metadata?: Record<string, unknown>) => {
+    if (!shouldLog('ERROR')) return;
+    const entry: LogEntry = { timestamp: new Date().toISOString(), level: 'ERROR', component, message, metadata };
+    console.error(formatLog(entry));
+  },
+
+  // Special method for tracking rejection statistics
+  rejection: (reason: string, text: string, source?: string) => {
+    if (!shouldLog('INFO')) return;
+    const preview = text.length > 80 ? text.substring(0, 80) + '...' : text;
+    console.log(`🚫 [REJECTED] ${reason} | "${preview}"${source ? ` | Source: ${source}` : ''}`);
+  },
+
+  // Summary logging for pipeline stages
+  summary: (component: string, stats: Record<string, number>) => {
+    if (!shouldLog('INFO')) return;
+    const statsStr = Object.entries(stats).map(([k, v]) => `${k}=${v}`).join(', ');
+    console.log(`📊 [SUMMARY] [${component}] ${statsStr}`);
+  },
+};
+
 // AFRO country codes (ISO3) - hard filter
 const AFRO_COUNTRIES = [
   "AGO","BEN","BWA","BFA","BDI","CPV","CMR","CAF","TCD","COM","COG","CIV","COD",
@@ -2882,28 +2962,30 @@ serve(async (req) => {
       ...mastodonSignals
     ];
     
-    console.log(`Fetched ${allSignals.length} raw signals from 20 sources:
-      - GDELT: ${gdeltSignals.length}
-      - ReliefWeb: ${reliefwebSignals.length}
-      - WHO GHO: ${whoSignals.length}
-      - AllAfrica: ${allAfricaSignals.length}
-      - BBC Hausa: ${bbcHausaSignals.length}
-      - BBC Swahili: ${bbcSwahiliSignals.length}
-      - BBC Amharic: ${bbcAmharicSignals.length}
-      - Sahara Reporters: ${saharaSignals.length}
-      - Africa CDC: ${africaCdcSignals.length}
-      - APO Africa: ${apoAfricaSignals.length}
-      - Africanews: ${africanewsSignals.length}
-      - Vanguard Nigeria: ${vanguardSignals.length}
-      - Daily Nation Kenya: ${nationKenyaSignals.length}
-      - News24 SA: ${news24Signals.length}
-      - Reporter Ethiopia: ${reporterEthSignals.length}
-      - HDX: ${hdxSignals.length}
-      - WHO DON (NEW): ${whoDonSignals.length}
-      - OCHA FTS (NEW): ${ochaFtsSignals.length}
-      - Reddit Africa (NEW): ${redditSignals.length}
-      - Mastodon Health (NEW): ${mastodonSignals.length}
-    `);
+    // Log source breakdown
+    logger.info('INGESTION', `Fetched ${allSignals.length} raw signals from 20 sources`);
+    logger.summary('SOURCES', {
+      GDELT: gdeltSignals.length,
+      ReliefWeb: reliefwebSignals.length,
+      WHO_GHO: whoSignals.length,
+      AllAfrica: allAfricaSignals.length,
+      BBC_Hausa: bbcHausaSignals.length,
+      BBC_Swahili: bbcSwahiliSignals.length,
+      BBC_Amharic: bbcAmharicSignals.length,
+      Sahara_Reporters: saharaSignals.length,
+      Africa_CDC: africaCdcSignals.length,
+      APO_Africa: apoAfricaSignals.length,
+      Africanews: africanewsSignals.length,
+      Vanguard_Nigeria: vanguardSignals.length,
+      Daily_Nation_Kenya: nationKenyaSignals.length,
+      News24_SA: news24Signals.length,
+      Reporter_Ethiopia: reporterEthSignals.length,
+      HDX: hdxSignals.length,
+      WHO_DON: whoDonSignals.length,
+      OCHA_FTS: ochaFtsSignals.length,
+      Reddit_Africa: redditSignals.length,
+      Mastodon_Health: mastodonSignals.length,
+    });
     
     // Deduplicate by hash
     const existingHashes = new Set<string>();
@@ -2918,19 +3000,29 @@ serve(async (req) => {
     }
     
     // STEP 1: Apply content filter BEFORE deduplication for efficiency
+    const rejectionStats: Record<string, number> = {};
     const contentFilteredSignals = allSignals.filter(s => {
       const filterResult = isValidOutbreakSignal(s.original_text);
       if (!filterResult.valid) {
-        console.log(`REJECTED: "${s.original_text.substring(0, 80)}..." - ${filterResult.reason}`);
+        // Track rejection reasons
+        const reason = filterResult.reason || 'unknown';
+        rejectionStats[reason] = (rejectionStats[reason] || 0) + 1;
+        logger.rejection(filterResult.reason, s.original_text, s.source_name);
       }
       return filterResult.valid;
     });
     
-    console.log(`${contentFilteredSignals.length} signals after content filter (${allSignals.length - contentFilteredSignals.length} rejected)`);
+    // Log rejection summary
+    if (Object.keys(rejectionStats).length > 0) {
+      logger.info('NOISE_FILTER', 'Rejection breakdown by reason');
+      logger.summary('REJECTIONS', rejectionStats);
+    }
+    
+    logger.info('PIPELINE', `Content filter: ${contentFilteredSignals.length} passed, ${allSignals.length - contentFilteredSignals.length} rejected`);
     
     // STEP 2: Deduplicate by hash
     const newSignals = contentFilteredSignals.filter(s => !existingHashes.has(s.duplicate_hash));
-    console.log(`${newSignals.length} new signals after dedup`);
+    logger.info('PIPELINE', `Deduplication: ${newSignals.length} new signals (${contentFilteredSignals.length - newSignals.length} duplicates removed)`);
     
     // STEP 3: Analyze and insert signals
     const insertedSignals: any[] = [];
@@ -2943,7 +3035,7 @@ serve(async (req) => {
         
         // Check if AI rejected the signal as non-outbreak content
         if (analysis && analysis.is_outbreak === false) {
-          console.log(`AI REJECTED: "${signal.original_text.substring(0, 80)}..." - ${analysis.rejection_reason || 'Not an outbreak'}`);
+          logger.rejection(`AI: ${analysis.rejection_reason || 'Not an outbreak'}`, signal.original_text, 'AI_VALIDATOR');
           rejectedByAI.push({
             text: signal.original_text.substring(0, 100),
             reason: analysis.rejection_reason
@@ -2960,6 +3052,12 @@ serve(async (req) => {
           signal.reported_cases = analysis.reported_cases || null;
           signal.reported_deaths = analysis.reported_deaths || null;
           signal.cross_border_risk = analysis.cross_border_risk || false;
+          
+          logger.debug('AI_ANALYSIS', `Classified signal`, {
+            disease: analysis.disease_name,
+            priority: analysis.priority,
+            location: analysis.location_admin1
+          });
         }
       }
       
@@ -2973,13 +3071,28 @@ serve(async (req) => {
         .single();
       
       if (error) {
-        console.error('Insert error:', error.message);
+        logger.error('DATABASE', `Insert failed: ${error.message}`, { signal_source: signal.source_name });
       } else {
         insertedSignals.push(data);
+        logger.info('DATABASE', `Inserted signal`, { 
+          id: data.id, 
+          priority: data.priority, 
+          disease: data.disease_name,
+          country: data.location_country 
+        });
       }
     }
     
-    console.log(`Inserted ${insertedSignals.length} signals, AI rejected ${rejectedByAI.length}`);
+    // Final pipeline summary
+    logger.info('INGESTION', '✅ Pipeline complete');
+    logger.summary('FINAL_STATS', {
+      fetched: allSignals.length,
+      passed_filter: contentFilteredSignals.length,
+      rejected_filter: allSignals.length - contentFilteredSignals.length,
+      after_dedup: newSignals.length,
+      inserted: insertedSignals.length,
+      ai_rejected: rejectedByAI.length
+    });
     
     return new Response(
       JSON.stringify({
@@ -2996,7 +3109,9 @@ serve(async (req) => {
     );
     
   } catch (error) {
-    console.error('Ingestion error:', error);
+    logger.error('INGESTION', `Pipeline failed: ${error instanceof Error ? error.message : 'Unknown error'}`, {
+      stack: error instanceof Error ? error.stack : undefined
+    });
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
