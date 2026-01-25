@@ -1,0 +1,187 @@
+{
+  "afro_region_codes": [
+    "AGO","BEN","BWA","BFA","BDI","CPV","CMR","CAF","TCD","COM",
+    "COG","CIV","COD","GNQ","ERI","ETH","GAB","GMB","GHA","GIN",
+    "GNB","KEN","LSO","LBR","MDG","MWI","MLI","MRT","MUS","MOZ",
+    "NAM","NER","NGA","RWA","STP","SEN","SYC","SLE","ZAF","SSD",
+    "TZA","TGO","UGA","ZMB","ZWE","DZA","TUN","LBY","MAR","SWZ"
+  ],
+  "afro_diseases": [
+    { "code": "A00", "name": "Cholera", "syndrome": "AWD" },
+    { "code": "A01", "name": "Typhoid fever", "syndrome": "Febrile" },
+    { "code": "A20", "name": "Plague", "syndrome": "Febrile" },
+    { "code": "A80", "name": "Polio", "syndrome": "AFP" },
+    { "code": "A90", "name": "Dengue", "syndrome": "Febrile" },
+    { "code": "A92", "name": "Yellow fever", "syndrome": "Febrile" },
+    { "code": "A95", "name": "Yellow fever", "syndrome": "Febrile" },
+    { "code": "B50", "name": "Malaria", "syndrome": "Febrile" },
+    { "code": "B05", "name": "Measles", "syndrome": "Rash" },
+    { "code": "B20", "name": "HIV", "syndrome": "Chronic" },
+    { "code": "A16", "name": "Tuberculosis", "syndrome": "Respiratory" },
+    { "code": "A98", "name": "Viral hemorrhagic fevers", "syndrome": "Hemorrhagic" },
+    { "code": "A99", "name": "Ebola/Marburg", "syndrome": "Hemorrhagic" },
+    { "code": "U07", "name": "COVID-19", "syndrome": "Respiratory" },
+    { "code": "A82", "name": "Rabies", "syndrome": "Neurological" },
+    { "code": "A37", "name": "Pertussis", "syndrome": "Respiratory" },
+    { "code": "A33", "name": "Neonatal tetanus", "syndrome": "Neurological" },
+    { "code": "A39", "name": "Meningococcal disease", "syndrome": "Neurological" },
+    { "code": "B55", "name": "Leishmaniasis", "syndrome": "Febrile" },
+    { "code": "A27", "name": "Leptospirosis", "syndrome": "Febrile" },
+    { "code": "A96", "name": "Lassa fever", "syndrome": "Hemorrhagic" },
+    { "code": "A78", "name": "Q fever", "syndrome": "Febrile" },
+    { "code": "A75", "name": "Typhus", "syndrome": "Febrile" }
+  ],
+  "syndrome_buckets": [
+    "AWD", "AFP", "ILI", "SARI", "Febrile",
+    "Hemorrhagic", "Rash", "Neurological",
+    "Chronic", "Respiratory"
+  ],
+  "signal_event_cluster_alert": {
+    "media_signal": [
+      "signal_id", "country_iso3", "source_type", "source_name",
+      "headline", "matched_keywords", "published_at", "processing_status"
+    ],
+    "extracted_event": [
+      "event_id", "signal_id", "country_iso3", "admin1", "admin2",
+      "disease", "temporal", "cases", "extraction_confidence"
+    ],
+    "incident_cluster": [
+      "cluster_id", "event_ids", "cluster_type", "severity_level", "onset_range"
+    ],
+    "afro_alert": [
+      "alert_id", "cluster_id", "alert_type", "alert_level", "summary", "issued_on"
+    ]
+  },
+  "fusion_alert_schema": {
+    "fusion_alert": [
+      "fusion_id", "alert_ids", "combined_context", "confidence_score", "regions_affected", "alert_date"
+    ]
+  },
+
+  "api_catalog": [
+    {
+      "name": "ProMED",
+      "url": "https://www.promedmail.org/",
+      "format": "RSS",
+      "auth_required": false,
+      "category": "disease_alerts",
+      "coverage": "Global"
+    },
+    {
+      "name": "HealthMap",
+      "url": "https://healthmap.org/api/",
+      "format": "JSON",
+      "auth_required": true,
+      "category": "disease_alerts",
+      "coverage": "Global"
+    },
+    {
+      "name": "WHO GHO OData",
+      "url": "https://ghoapi.azureedge.net/api/",
+      "format": "JSON",
+      "auth_required": false,
+      "category": "official_health_data"
+    },
+    {
+      "name": "DHIS2",
+      "url": "https://docs.dhis2.org/",
+      "format": "REST",
+      "auth_required": true,
+      "category": "official_health_data"
+    },
+    {
+      "name": "OpenMRS",
+      "url": "https://rest.openmrs.org/",
+      "format": "FHIR",
+      "auth_required": true,
+      "category": "official_health_data"
+    },
+    {
+      "name": "GDELT",
+      "url": "https://api.gdeltproject.org/api/v2/doc/doc",
+      "format": "JSON",
+      "auth_required": false,
+      "category": "news_media"
+    },
+    {
+      "name": "NewsAPI.org",
+      "url": "https://newsapi.org/",
+      "format": "JSON",
+      "auth_required": true,
+      "category": "news_media"
+    },
+    {
+      "name": "Twitter API",
+      "url": "https://developer.twitter.com/",
+      "format": "JSON",
+      "auth_required": true,
+      "category": "social_media"
+    },
+    {
+      "name": "Reddit API",
+      "url": "https://www.reddit.com/dev/api/",
+      "format": "JSON",
+      "auth_required": true,
+      "category": "social_media"
+    },
+    {
+      "name": "Healthsites.io",
+      "url": "https://healthsites.io/api/v2/facilities/",
+      "format": "GeoJSON",
+      "auth_required": false,
+      "category": "facilities"
+    },
+    {
+      "name": "HDX",
+      "url": "https://data.humdata.org/api/3/action/package_search",
+      "format": "JSON",
+      "auth_required": false,
+      "category": "facilities"
+    },
+    {
+      "name": "WorldPop",
+      "url": "https://www.worldpop.org/rest/data",
+      "format": "JSON",
+      "auth_required": false,
+      "category": "population"
+    },
+    {
+      "name": "Google Trends",
+      "url": "https://trends.google.com/trends/",
+      "format": "pytrends",
+      "auth_required": false,
+      "category": "google_signals"
+    }
+  ],
+  "country_starter_stacks": {
+    "Nigeria": [
+      "DHIS2", "NewsAPI.org", "GDELT", "Twitter API", "Healthsites.io"
+    ],
+    "Kenya": [
+      "DHIS2", "OpenMRS", "GDELT", "Google Trends"
+    ],
+    "Ghana": [
+      "DHIS2", "WAHO", "GDELT", "Twitter API", "Healthsites.io"
+    ],
+    "South Africa": [
+      "OpenMRS", "NewsAPI.org", "GDELT", "Africa Data Hub"
+    ],
+    "Ethiopia": [
+      "DHIS2", "ProMED", "GDELT", "Google Trends"
+    ]
+  },
+  "recommended_libraries": [
+    "gdelt", "pytrends", "tweepy", "newsapi-python",
+    "hdx-python-api", "requests", "pandas"
+  ],
+  "integration_architecture": {
+    "pipeline": [
+      "media + social signal ingestion",
+      "keyword/entity/disease extraction",
+      "structured event conversion",
+      "event → cluster mapping",
+      "final alert generation",
+      "dashboard + notification"
+    ]
+  }
+}
