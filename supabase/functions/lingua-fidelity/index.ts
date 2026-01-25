@@ -182,7 +182,7 @@ const AFRICAN_LANGUAGES: Record<string, {
   },
 };
 
-// Disease Keywords in African Languages (Hausa, Yoruba, Swahili)
+// Disease Keywords in African Languages (Hausa, Yoruba, Swahili, Amharic, Igbo, Wolof, Fulfulde)
 const DISEASE_KEYWORDS_MULTILINGUAL: Record<string, {
   disease: string;
   category: string;
@@ -192,6 +192,10 @@ const DISEASE_KEYWORDS_MULTILINGUAL: Record<string, {
     ha: string[];  // Hausa
     yo: string[];  // Yoruba
     sw: string[];  // Swahili
+    am: string[];  // Amharic
+    ig: string[];  // Igbo
+    wo: string[];  // Wolof
+    ff: string[];  // Fulfulde
     fr: string[];  // French (widely used)
     ar: string[];  // Arabic
   };
@@ -205,6 +209,10 @@ const DISEASE_KEYWORDS_MULTILINGUAL: Record<string, {
       ha: ['zawo', 'ciwon hanji', 'gudawa', 'rashin ruwa jiki', 'zawo ruwa', 'hauka hanji'],
       yo: ['gbuuru', 'igbe gbuuru', 'àìsàn gbuuru', 'omi ara', 'àrùn gbuuru olomi'],
       sw: ['kipindupindu', 'kuhara maji', 'kuharisha', 'kichaa cha maji', 'ugonjwa wa kuendesha'],
+      am: ['ኮሌራ', 'ተቅማጥ', 'ውሃማ ተቅማጥ', 'የውሃ እጥረት'],
+      ig: ['ọrịa cholera', 'afọ ọsịsa', 'ịgba ọsịsọ', 'ịkpọ nkụ mmiri'],
+      wo: ['kolera', 'bët gu baax', 'toq bu yëg', 'baña ndox'],
+      ff: ['kolera', 'ɓooɗe', 'ndiyam reedu', 'caɗeele ndiyam'],
       fr: ['choléra', 'diarrhée aqueuse', 'déshydratation'],
       ar: ['كوليرا', 'إسهال', 'جفاف']
     }
@@ -218,6 +226,10 @@ const DISEASE_KEYWORDS_MULTILINGUAL: Record<string, {
       ha: ['ebola', 'zazzabin zubar jini', 'cutar zubar jini', 'annoba ebola'],
       yo: ['ebola', 'ibà ẹjẹ', 'àrùn ẹjẹ sísàn', 'àìsàn ebola'],
       sw: ['ebola', 'homa ya kutoka damu', 'ugonjwa wa ebola', 'kuumwa na damu'],
+      am: ['ኢቦላ', 'የደም ትኩሳት', 'የደም መፍሰስ', 'የኢቦላ ቫይረስ'],
+      ig: ['ebola', 'ọkụ ahụ na-ekpu ọbara', 'ọrịa ọbara', 'nje ebola'],
+      wo: ['ebola', 'tànk bu nekk deret', 'feebar deret'],
+      ff: ['ebola', 'jonte ƴiiƴam', 'nyawu ƴiiƴam', 'ebola nyawu'],
       fr: ['ebola', 'fièvre hémorragique', 'saignement'],
       ar: ['إيبولا', 'حمى نزفية', 'نزيف']
     }
@@ -231,6 +243,10 @@ const DISEASE_KEYWORDS_MULTILINGUAL: Record<string, {
       ha: ['marburg', 'cutar marburg', 'zazzabin zubar jini'],
       yo: ['marburg', 'àrùn marburg'],
       sw: ['marburg', 'homa ya kutoka damu', 'virusi ya marburg'],
+      am: ['ማርበርግ', 'የማርበርግ ቫይረስ', 'የደም ትኩሳት'],
+      ig: ['marburg', 'ọrịa marburg', 'nje marburg'],
+      wo: ['marburg', 'tànk marburg'],
+      ff: ['marburg', 'nyawu marburg'],
       fr: ['marburg', 'virus de marburg', 'fièvre hémorragique'],
       ar: ['ماربورغ', 'فيروس ماربورغ']
     }
@@ -244,6 +260,10 @@ const DISEASE_KEYWORDS_MULTILINGUAL: Record<string, {
       ha: ['zazzabin lassa', 'cutar lassa', 'lassa', 'zazzabin bera'],
       yo: ['ibà lassa', 'àrùn lassa', 'ibà eku'],
       sw: ['homa ya lassa', 'lassa'],
+      am: ['ላሳ ትኩሳት', 'ላሳ', 'የአይጥ ትኩሳት'],
+      ig: ['ọkụ ahụ lassa', 'ọrịa lassa', 'ọkụ ahụ oke'],
+      wo: ['tànk lassa', 'lassa', 'feebar jinne'],
+      ff: ['jonte lassa', 'lassa', 'nyawu lassa'],
       fr: ['fièvre de lassa', 'lassa'],
       ar: ['حمى لاسا', 'لاسا']
     }
@@ -257,6 +277,10 @@ const DISEASE_KEYWORDS_MULTILINGUAL: Record<string, {
       ha: ['kyanda', 'cutar kyanda', 'jan fata'],
       yo: ['igbonwo', 'àrùn igbonwo', 'ojú iwà'],
       sw: ['surua', 'chokaa', 'upele'],
+      am: ['ኩፍኝ', 'ቀይ ቁስል', 'የቆዳ ቁስል'],
+      ig: ['ọrịa akpịrị kịtaa', 'ọrịa measles', 'ahu ọkụ na-ese ese'],
+      wo: ['xénj', 'rougéole', 'mbëj'],
+      ff: ['ɓernde', 'nyawu ɓernde', 'jeere'],
       fr: ['rougeole', 'éruption cutanée'],
       ar: ['حصبة', 'طفح جلدي']
     }
@@ -270,6 +294,10 @@ const DISEASE_KEYWORDS_MULTILINGUAL: Record<string, {
       ha: ['sankarau', 'cutar sankarau', 'ciwon kai', 'wuyan taurin'],
       yo: ['àrùn ọpọlọ', 'orí wíwọ', 'àrùn egungun orí'],
       sw: ['homa ya uti wa mgongo', 'meningitis', 'shingo kavu'],
+      am: ['ማጅራት ገትር', 'የአንጎል ትኩሳት', 'ጭንቅላት ህመም'],
+      ig: ['ọrịa isi', 'ọkụ ahụ isi', 'olu kpọ nkịtị'],
+      wo: ['méningite', 'tànk xel', 'bët gu tar'],
+      ff: ['meningit', 'nyawu hoore', 'jonte hoore'],
       fr: ['méningite', 'raideur de la nuque'],
       ar: ['التهاب السحايا', 'تصلب الرقبة']
     }
@@ -283,6 +311,10 @@ const DISEASE_KEYWORDS_MULTILINGUAL: Record<string, {
       ha: ['zazzabin cizon sauro', 'malariya', 'zazzabi'],
       yo: ['ibà', 'arun efon', 'ibà pọnju'],
       sw: ['malaria', 'homa ya malaria', 'mbu'],
+      am: ['ወባ', 'የትንኝ ንክሻ ትኩሳት', 'ወባ በሽታ'],
+      ig: ['ịba', 'ọrịa anwụ', 'ọkụ ahụ nchụ'],
+      wo: ['sibiru', 'tànk wu caaxaan', 'feebar'],
+      ff: ['sippal', 'jonte ɓowɗi', 'nyawu ɓowɗi'],
       fr: ['paludisme', 'malaria', 'fièvre'],
       ar: ['ملاريا', 'حمى البرداء']
     }
@@ -296,6 +328,10 @@ const DISEASE_KEYWORDS_MULTILINGUAL: Record<string, {
       ha: ['zazzabin rawaya', 'cutar rawaya', 'fatar rawaya'],
       yo: ['ibà pupa', 'àrùn awọ ofeefee', 'iba ojúlógún'],
       sw: ['homa ya manjano', 'manjano ya ngozi'],
+      am: ['ቢጫ ትኩሳት', 'ቢጫ በሽታ', 'የቆዳ ቢጫነት'],
+      ig: ['ọkụ ahụ odo', 'ọrịa edo edo', 'anya odo'],
+      wo: ['feebar bu mboq', 'tànk bu mboq', 'deret gu mboq'],
+      ff: ['jonte oraange', 'nyawu rawaneewu', 'gite oraange'],
       fr: ['fièvre jaune', 'jaunisse'],
       ar: ['الحمى الصفراء', 'اليرقان']
     }
@@ -309,6 +345,10 @@ const DISEASE_KEYWORDS_MULTILINGUAL: Record<string, {
       ha: ['mpox', 'agana', 'cutar agana', 'kuraje'],
       yo: ['mpox', 'ìyọnu ara', 'àrùn ọbọ'],
       sw: ['mpox', 'ndui ya nyani', 'upele', 'malengelenge'],
+      am: ['ኤምፖክስ', 'የዝንጀሮ ፈንጣጣ', 'ቁስል'],
+      ig: ['mpox', 'ọrịa ọbọ', 'ọnya ahụ'],
+      wo: ['mpox', 'feebar golo', 'mbëj golo'],
+      ff: ['mpox', 'nyawu baadi', 'semmbe baadi'],
       fr: ['mpox', 'variole du singe', 'pustules'],
       ar: ['جدري القردة', 'بثور']
     }
@@ -322,6 +362,10 @@ const DISEASE_KEYWORDS_MULTILINGUAL: Record<string, {
       ha: ['zazzabin dengue', 'cutar dengue'],
       yo: ['ibà dengue', 'àrùn dengue'],
       sw: ['homa ya dengue', 'dengue'],
+      am: ['ዴንጊ', 'የዴንጊ ትኩሳት', 'አጥንት ሰባሪ ትኩሳት'],
+      ig: ['ọkụ ahụ dengue', 'ọrịa dengue'],
+      wo: ['dengue', 'tànk dengue', 'feebar yax'],
+      ff: ['dengue', 'jonte dengue', 'nyawu dengue'],
       fr: ['dengue', 'fièvre dengue'],
       ar: ['حمى الضنك', 'دنج']
     }
@@ -335,6 +379,10 @@ const DISEASE_KEYWORDS_MULTILINGUAL: Record<string, {
       ha: ['zazzabin typhoid', 'taifo', 'cutar typhoid'],
       yo: ['ibà typhoid', 'taifo', 'àrùn inu'],
       sw: ['homa ya matumbo', 'typhoid', 'taifodi'],
+      am: ['ታይፎይድ', 'የሆድ ትኩሳት', 'ታይፎይድ ትኩሳት'],
+      ig: ['ọkụ ahụ afọ', 'ọrịa typhoid', 'taifo'],
+      wo: ['tànk bët', 'feebar typhoid', 'taifo'],
+      ff: ['jonte reedu', 'taifo', 'nyawu reedu'],
       fr: ['typhoïde', 'fièvre typhoïde'],
       ar: ['حمى التيفوئيد', 'تيفوئيد']
     }
@@ -348,6 +396,10 @@ const DISEASE_KEYWORDS_MULTILINGUAL: Record<string, {
       ha: ['shan inna', 'polio', 'cutar gurguzu'],
       yo: ['roparose', 'àrùn ẹsẹ rírọ', 'polio'],
       sw: ['polio', 'ugonjwa wa kupooza', 'kupooza'],
+      am: ['ፖሊዮ', 'ሽባ', 'የእግር ሽባ', 'ህፃናት ሽባ'],
+      ig: ['ọrịa ọgbụgba', 'polio', 'ahụ kpọnwụrụ akpọnwụ'],
+      wo: ['polio', 'tànk yaram bu tàng', 'feebar polio'],
+      ff: ['polio', 'nyawu koyɗe', 'maayɗe koyɗe'],
       fr: ['polio', 'poliomyélite', 'paralysie'],
       ar: ['شلل الأطفال', 'بوليو']
     }
@@ -361,6 +413,10 @@ const DISEASE_KEYWORDS_MULTILINGUAL: Record<string, {
       ha: ['haukan kare', 'cutar kare', 'cizon kare'],
       yo: ['aja wèrè', 'igbẹ aja', 'àrùn aja'],
       sw: ['kichaa cha mbwa', 'mbwa mwendawazimu', 'rabies'],
+      am: ['የውሻ ባላገር', 'እብድ ውሻ', 'የውሻ ንክሻ'],
+      ig: ['ọrịa nkịta ara', 'nkịta gbara ara', 'ata nkịta'],
+      wo: ['mbaam-xonq', 'tànk xaj', 'xaj bu dof'],
+      ff: ['rawaandu haangu', 'nyawu rawaandu', 'ñaatugol rawaandu'],
       fr: ['rage', 'hydrophobie', 'morsure de chien'],
       ar: ['داء الكلب', 'سعار', 'عضة كلب']
     }
@@ -374,6 +430,10 @@ const DISEASE_KEYWORDS_MULTILINGUAL: Record<string, {
       ha: ['annoba', 'cutar annoba', 'ta\'uni'],
       yo: ['àjàkálẹ̀ àrùn', 'àrùn iku'],
       sw: ['tauni', 'pigo', 'ugonjwa wa tauni'],
+      am: ['ቸነፈር', 'ሞት', 'ጥቁር ሞት', 'የቸነፈር በሽታ'],
+      ig: ['ọrịa ọjọọ', 'ọrịa ọnwụ', 'ajọ ọrịa'],
+      wo: ['taxawaay bu bon', 'feebar bu rey', 'mbëdd'],
+      ff: ['nyawu bonɗum', 'maayɗe bonɗe', 'annoba'],
       fr: ['peste', 'bubonique', 'peste pulmonaire'],
       ar: ['الطاعون', 'طاعون']
     }
@@ -387,6 +447,10 @@ const DISEASE_KEYWORDS_MULTILINGUAL: Record<string, {
       ha: ['covid', 'korona', 'cutar korona'],
       yo: ['covid', 'korona', 'àrùn covid'],
       sw: ['covid', 'korona', 'virusi vya korona'],
+      am: ['ኮቪድ', 'ኮሮና', 'ኮሮና ቫይረስ', 'ኮቪድ-19'],
+      ig: ['covid', 'korona', 'ọrịa korona'],
+      wo: ['covid', 'korona', 'feebar korona'],
+      ff: ['covid', 'korona', 'nyawu korona'],
       fr: ['covid', 'coronavirus', 'covid-19'],
       ar: ['كوفيد', 'كورونا', 'فيروس كورونا']
     }
@@ -400,6 +464,10 @@ const DISEASE_KEYWORDS_MULTILINGUAL: Record<string, {
       ha: ['zazzabin rift valley', 'cutar dabbobi'],
       yo: ['ibà rift valley', 'àrùn ẹran'],
       sw: ['homa ya bonde la ufa', 'rvf', 'ugonjwa wa mifugo'],
+      am: ['ሪፍት ቫሊ ትኩሳት', 'የከብቶች ትኩሳት', 'የእንስሳት በሽታ'],
+      ig: ['ọkụ ahụ rift valley', 'ọrịa anụmanụ'],
+      wo: ['tànk rift valley', 'feebar mala'],
+      ff: ['jonte rift valley', 'nyawu jawɗi'],
       fr: ['fièvre de la vallée du rift'],
       ar: ['حمى الوادي المتصدع']
     }
@@ -413,6 +481,10 @@ const DISEASE_KEYWORDS_MULTILINGUAL: Record<string, {
       ha: ['cutar anthrax', 'cizon anthrax'],
       yo: ['àrùn anthrax'],
       sw: ['kimeta', 'ugonjwa wa anthrax'],
+      am: ['አንትራክስ', 'የቆዳ ቁስል በሽታ', 'ጥቁር ቁስል'],
+      ig: ['ọrịa anthrax', 'anthrax'],
+      wo: ['anthrax', 'feebar anthrax'],
+      ff: ['anthrax', 'nyawu anthrax'],
       fr: ['anthrax', 'charbon', 'maladie du charbon'],
       ar: ['الجمرة الخبيثة', 'أنثراكس']
     }
@@ -425,6 +497,10 @@ const ALERT_KEYWORDS_MULTILINGUAL: Record<string, {
   ha: string[];
   yo: string[];
   sw: string[];
+  am: string[];
+  ig: string[];
+  wo: string[];
+  ff: string[];
   fr: string[];
   ar: string[];
 }> = {
@@ -433,6 +509,10 @@ const ALERT_KEYWORDS_MULTILINGUAL: Record<string, {
     ha: ['annobar', 'cutar da ta yadu', 'gaggawa', 'karuwar masu rashin lafiya'],
     yo: ['àjàkálẹ̀', 'àrùn', 'ìṣẹlẹ̀ àrùn', 'pàjáwìrì'],
     sw: ['mlipuko', 'janga', 'dharura', 'kuenea'],
+    am: ['ወረርሽኝ', 'ወረርሽኝ መከሰት', 'ድንገተኛ', 'መስፋፋት'],
+    ig: ['ọrịa gbara ọsọ', 'oke ọrịa', 'mgbasa ọrịa', 'nsogbu'],
+    wo: ['mbég', 'feebar bu ànd', 'jamonoy wu ànd', 'xew-xew'],
+    ff: ['annoba', 'nyawu saɗtiingu', 'heɓɓitaago', 'caɗeele'],
     fr: ['épidémie', 'flambée', 'urgence', 'foyer'],
     ar: ['تفشي', 'وباء', 'طوارئ']
   },
@@ -441,6 +521,10 @@ const ALERT_KEYWORDS_MULTILINGUAL: Record<string, {
     ha: ['mutuwa', 'ya mutu', 'mace-mace', 'rasuwa'],
     yo: ['ikú', 'ó kú', 'òkú', 'àwọn tó kú'],
     sw: ['kifo', 'alifariki', 'alikufa', 'vifo'],
+    am: ['ሞት', 'ሞተ', 'ሟች', 'የሞት መጠን'],
+    ig: ['ọnwụ', 'ọ nwụrụ', 'ndị nwụrụ anwụ', 'egburu'],
+    wo: ['dee', 'mu dee', 'nit ku dee', 'rey'],
+    ff: ['maayde', 'o maayii', 'maayɓe', 'wareede'],
     fr: ['mort', 'décès', 'décédé', 'mortalité'],
     ar: ['وفاة', 'موت', 'توفي']
   },
@@ -449,6 +533,10 @@ const ALERT_KEYWORDS_MULTILINGUAL: Record<string, {
     ha: ['masu cutar', 'marasa lafiya', 'waɗanda suka kamu', 'tabbataccen'],
     yo: ['àwọn aláìsàn', 'àkóràn', 'tí a fìdí múlẹ̀'],
     sw: ['visa', 'wagonjwa', 'walioambukizwa', 'imethibitishwa'],
+    am: ['ታማሚዎች', 'ህሙማን', 'የተያዙ', 'የተረጋገጠ'],
+    ig: ['ọrịa', 'ndị ọrịa', 'ndị nje metụrụ', 'a kwadoro'],
+    wo: ['mbég', 'feebaru', 'jàmm a nekkul', 'dëgg na'],
+    ff: ['nyawɓe', 'ɓe nyawi', 'ɓe ɗaɓɓitaa', 'tabintinaaɗo'],
     fr: ['cas', 'patients', 'infectés', 'confirmés', 'suspects'],
     ar: ['حالات', 'مرضى', 'مصابين', 'مؤكد']
   },
@@ -457,6 +545,10 @@ const ALERT_KEYWORDS_MULTILINGUAL: Record<string, {
     ha: ['asibitin', 'asibiti', 'cibiyar lafiya', 'likita'],
     yo: ['ilé ìwòsàn', 'ilé ìtọjú', 'dókítà'],
     sw: ['hospitali', 'zahanati', 'kituo cha afya', 'daktari'],
+    am: ['ሆስፒታል', 'ክሊኒክ', 'ጤና ጣቢያ', 'ሕክምና'],
+    ig: ['ụlọ ọgwụ', 'klinik', 'ebe ahụike', 'dọkịta'],
+    wo: ['opitaal', 'klinik', 'poste de santé', 'doktoor'],
+    ff: ['opitaal', 'safirdu', 'nokku cellal', 'cafroowo'],
     fr: ['hôpital', 'clinique', 'centre de santé', 'médical'],
     ar: ['مستشفى', 'عيادة', 'مركز صحي']
   },
@@ -465,6 +557,10 @@ const ALERT_KEYWORDS_MULTILINGUAL: Record<string, {
     ha: ['yara', 'jariri', 'ƴaƴa', 'yaro'],
     yo: ['àwọn ọmọ', 'ọmọ', 'ìkókó', 'ọmọdé'],
     sw: ['watoto', 'mtoto', 'chini ya miaka mitano'],
+    am: ['ህፃናት', 'ልጅ', 'ጨቅላ', 'አራስ'],
+    ig: ['ụmụaka', 'nwata', 'nwa ọhụrụ', 'nwa ọkpụkpụ'],
+    wo: ['xale', 'doom', 'liir', 'ndaw'],
+    ff: ['sukaaɓe', 'cukalel', 'payka', 'ɓinngel'],
     fr: ['enfants', 'enfant', 'nourrisson', 'pédiatrique'],
     ar: ['أطفال', 'طفل', 'رضيع']
   }
@@ -491,9 +587,23 @@ const LANGUAGE_PATTERNS: Record<string, {
     script: 'latin'
   },
   'am': {
-    uniqueChars: /[\u1200-\u137F]/,  // Ge'ez script
-    commonWords: [],
+    uniqueChars: /[\u1200-\u137F]/,  // Ge'ez script (Amharic)
+    commonWords: ['እና', 'ነው', 'ወደ', 'ላይ', 'ያለ', 'የ', 'ይህ', 'ከ', 'በ', 'ስለ', 'ምን', 'እንደ', 'ነበር', 'አለ', 'ሆነ'],
     script: 'ge_ez'
+  },
+  'ig': {
+    uniqueChars: /[ịọụṅ]/i,  // Igbo dotted letters
+    commonWords: ['na', 'ọ', 'ya', 'ka', 'nke', 'onye', 'gị', 'anyị', 'ha', 'bụ', 'dị', 'ihe', 'ebe', 'maka', 'ndị', 'ma', 'nwere', 'ọzọ', 'ugbu'],
+    script: 'latin'
+  },
+  'wo': {
+    commonWords: ['ak', 'ci', 'bu', 'wu', 'mu', 'am', 'di', 'la', 'na', 'ne', 'ni', 'nu', 'du', 'bi', 'yi', 'gi', 'ndax', 'waaye', 'dana', 'dina', 'dinaa', 'nekk', 'jëm', 'dem'],
+    script: 'latin'
+  },
+  'ff': {
+    uniqueChars: /[ɓɗƴŋ]/i,  // Fulfulde hooked letters
+    commonWords: ['e', 'o', 'ko', 'ɗo', 'mo', 'ɓe', 'nde', 'ngal', 'ngol', 'ndu', 'dow', 'les', 'haa', 'bee', 'fof', 'kam', 'koo', 'nden', 'waɗi', 'yimɓe'],
+    script: 'latin'
   },
   'ar': {
     uniqueChars: /[\u0600-\u06FF]/,  // Arabic script
