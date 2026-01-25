@@ -10,6 +10,7 @@ export interface AutoDetection {
   description: string;
   location: string;
   metric?: string;
+  fadingOut?: boolean;
 }
 
 interface AutoDetectionPopupProps {
@@ -34,7 +35,8 @@ export function AutoDetectionPopup({ detections, onDismiss }: AutoDetectionPopup
         <div
           key={det.id}
           className={cn(
-            'bg-foreground text-background p-4 rounded-xl shadow-2xl border w-80 pointer-events-auto animate-slide-in-right',
+            'bg-foreground text-background p-4 rounded-xl shadow-2xl border w-80 pointer-events-auto transition-all duration-300',
+            det.fadingOut ? 'opacity-0 translate-x-4' : 'animate-slide-in-right opacity-100',
             det.severity === 'CRITICAL' && 'border-destructive',
             det.severity === 'HIGH' && 'border-sunset'
           )}

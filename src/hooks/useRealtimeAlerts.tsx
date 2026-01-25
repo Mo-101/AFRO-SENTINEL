@@ -7,13 +7,19 @@ interface UseRealtimeAlertsOptions {
   enabled?: boolean;
   playSound?: boolean;
   maxAlerts?: number;
+  autoDismissMs?: number; // Auto-dismiss after X milliseconds
+}
+
+interface AlertWithMeta extends AutoDetection {
+  fadingOut?: boolean;
 }
 
 export function useRealtimeAlerts(options: UseRealtimeAlertsOptions = {}) {
-  const { enabled = true, playSound = true, maxAlerts = 5 } = options;
-  const [alerts, setAlerts] = useState<AutoDetection[]>([]);
+  const { enabled = true, playSound = true, maxAlerts = 5, autoDismissMs = 10000 } = options;
+  const [alerts, setAlerts] = useState<AlertWithMeta[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const processedIds = useRef<Set<string>>(new Set());
+  const dismissTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   // Initialize audio element
   useEffect(() => {
@@ -60,12 +66,46 @@ export function useRealtimeAlerts(options: UseRealtimeAlertsOptions = {}) {
     };
   }, []);
 
+  // Start fade-out animation, then remove after animation completes
   const dismissAlert = useCallback((id: string) => {
-    setAlerts(prev => prev.filter(a => a.id !== id));
+    // Clear any existing timer
+    const existingTimer = dismissTimers.current.get(id);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+      dismissTimers.current.delete(id);
+    }
+    
+    // Start fade-out animation
+    setAlerts(prev => prev.map(a => 
+      a.id === id ? { ...a, fadingOut: true } : a
+    ));
+    
+    // Remove after animation (300ms)
+    setTimeout(() => {
+      setAlerts(prev => prev.filter(a => a.id !== id));
+    }, 300);
   }, []);
 
   const clearAllAlerts = useCallback(() => {
+    // Clear all timers
+    dismissTimers.current.forEach(timer => clearTimeout(timer));
+    dismissTimers.current.clear();
     setAlerts([]);
+  }, []);
+
+  // Schedule auto-dismiss for an alert
+  const scheduleAutoDismiss = useCallback((id: string) => {
+    const timer = setTimeout(() => {
+      dismissAlert(id);
+    }, autoDismissMs);
+    dismissTimers.current.set(id, timer);
+  }, [autoDismissMs, dismissAlert]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      dismissTimers.current.forEach(timer => clearTimeout(timer));
+    };
   }, []);
 
   // Subscribe to realtime inserts
@@ -103,6 +143,9 @@ export function useRealtimeAlerts(options: UseRealtimeAlertsOptions = {}) {
             return updated;
           });
 
+          // Schedule auto-dismiss
+          scheduleAutoDismiss(newSignal.id);
+
           // Play sound for P1 alerts
           if (newSignal.priority === 'P1') {
             playAlertSound();
@@ -114,7 +157,7 @@ export function useRealtimeAlerts(options: UseRealtimeAlertsOptions = {}) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [enabled, maxAlerts, mapSignalToDetection, playAlertSound]);
+  }, [enabled, maxAlerts, mapSignalToDetection, playAlertSound, scheduleAutoDismiss]);
 
   return {
     alerts,
