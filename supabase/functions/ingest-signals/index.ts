@@ -699,8 +699,77 @@ const COUNTRY_COORDS: Record<string, { lat: number; lng: number }> = {
   "SDN": { lat: 12.8628, lng: 30.2176 },
 };
 
+// NON-AFRICAN COUNTRIES - Explicit blocklist for signals that slip through
+const NON_AFRICAN_COUNTRIES = [
+  "afghanistan", "albania", "argentina", "armenia", "australia", "austria", "azerbaijan",
+  "bahrain", "bangladesh", "belarus", "belgium", "bhutan", "bolivia", "bosnia", "brazil", 
+  "brunei", "bulgaria", "cambodia", "canada", "chile", "china", "colombia", "costa rica",
+  "croatia", "cuba", "cyprus", "czech", "denmark", "dominican", "ecuador", "el salvador",
+  "estonia", "fiji", "finland", "france", "georgia", "germany", "greece", "guatemala", 
+  "haiti", "honduras", "hong kong", "hungary", "iceland", "india", "indonesia", "iran", 
+  "iraq", "ireland", "israel", "italy", "jamaica", "japan", "jordan", "kazakhstan", 
+  "korea", "north korea", "south korea", "kosovo", "kuwait", "kyrgyzstan", "laos", 
+  "latvia", "lebanon", "liechtenstein", "lithuania", "luxembourg", "macau", "malaysia",
+  "maldives", "malta", "mexico", "moldova", "monaco", "mongolia", "montenegro", "myanmar", 
+  "nepal", "netherlands", "new zealand", "nicaragua", "norway", "oman", "pakistan", 
+  "palestine", "panama", "papua new guinea", "paraguay", "peru", "philippines", "poland", 
+  "portugal", "qatar", "romania", "russia", "russian", "saudi", "saudi arabia", "serbia", 
+  "singapore", "slovakia", "slovenia", "spain", "sri lanka", "sweden", "switzerland", 
+  "syria", "taiwan", "tajikistan", "thailand", "turkey", "turkmenistan", "ukraine", 
+  "united arab emirates", "uae", "united kingdom", "uk", "england", "scotland", "wales",
+  "united states", "usa", "u.s.", "america", "american", "uruguay", "uzbekistan", 
+  "venezuela", "vietnam", "yemen"
+];
+
+// Check if text is primarily about a non-African country
+function isPrimaryNonAfricanSubject(text: string): boolean {
+  const lowerText = text.toLowerCase();
+  
+  // Check if any non-African country appears BEFORE any African country
+  let firstNonAfricanPos = Infinity;
+  let firstAfricanPos = Infinity;
+  
+  for (const country of NON_AFRICAN_COUNTRIES) {
+    const pos = lowerText.indexOf(country);
+    if (pos !== -1 && pos < firstNonAfricanPos) {
+      firstNonAfricanPos = pos;
+    }
+  }
+  
+  for (const name of Object.keys(COUNTRY_NAME_TO_ISO3)) {
+    const pos = lowerText.indexOf(name);
+    if (pos !== -1 && pos < firstAfricanPos) {
+      firstAfricanPos = pos;
+    }
+  }
+  
+  // If non-African country appears first in headline, it's the primary subject
+  if (firstNonAfricanPos < firstAfricanPos && firstNonAfricanPos < 100) {
+    return true;
+  }
+  
+  // Also check for possessive form (e.g., "Bangladesh's")
+  for (const country of NON_AFRICAN_COUNTRIES) {
+    if (lowerText.includes(`${country}'s `) || lowerText.includes(`${country}n `)) {
+      // Check if this appears before position 50 (likely in headline)
+      const pos = lowerText.indexOf(country);
+      if (pos < 50) {
+        return true;
+      }
+    }
+  }
+  
+  return false;
+}
+
 function extractCountryISO3(text: string): string | null {
   const lowerText = text.toLowerCase();
+  
+  // FIRST: Check if this is primarily about a non-African country
+  if (isPrimaryNonAfricanSubject(text)) {
+    return null;  // Reject - not about Africa
+  }
+  
   for (const [name, iso3] of Object.entries(COUNTRY_NAME_TO_ISO3)) {
     if (lowerText.includes(name)) {
       return iso3;
