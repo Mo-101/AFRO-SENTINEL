@@ -1,96 +1,155 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Noto+Sans+Arabic:wght@100..900&family=Noto+Sans+Ethiopic:wght@100..900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* =====================================================
+   AFRO SENTINEL WATCHTOWER - Design System
+   Clean Professional + African-Inspired Modern
+   ===================================================== */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Core colors - Clean Professional Foundation */
+    --background: 40 20% 98%;
+    --foreground: 220 30% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 220 30% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 220 30% 15%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary - Deep Indigo (Trust, Authority) */
+    --primary: 215 50% 23%;
+    --primary-foreground: 40 20% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary - Warm Neutral */
+    --secondary: 40 15% 94%;
+    --secondary-foreground: 220 30% 15%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted - Subtle Background */
+    --muted: 40 10% 92%;
+    --muted-foreground: 220 15% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent - Savanna Green (Health, Growth) */
+    --accent: 95 40% 35%;
+    --accent-foreground: 40 20% 98%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* African-Inspired Accent Colors */
+    --sunset: 25 75% 55%;
+    --sunset-foreground: 40 20% 98%;
+    
+    --sahara: 42 70% 48%;
+    --sahara-foreground: 220 30% 15%;
+    
+    --savanna: 95 40% 35%;
+    --savanna-foreground: 40 20% 98%;
+    
+    --terracotta: 15 60% 50%;
+    --terracotta-foreground: 40 20% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Priority Colors */
+    --priority-p1: 0 85% 55%;
+    --priority-p1-foreground: 0 0% 100%;
+    
+    --priority-p2: 25 90% 55%;
+    --priority-p2-foreground: 0 0% 100%;
+    
+    --priority-p3: 45 90% 50%;
+    --priority-p3-foreground: 220 30% 15%;
+    
+    --priority-p4: 140 50% 45%;
+    --priority-p4-foreground: 0 0% 100%;
 
-    --radius: 0.5rem;
+    /* Source Tier Colors */
+    --tier-1: 215 60% 45%;
+    --tier-2: 280 45% 50%;
+    --tier-3: 340 50% 55%;
 
-    --sidebar-background: 0 0% 98%;
+    /* Destructive */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    /* UI Elements */
+    --border: 40 15% 88%;
+    --input: 40 15% 88%;
+    --ring: 215 50% 23%;
+    --radius: 0.625rem;
 
-    --sidebar-primary: 240 5.9% 10%;
+    /* Sidebar */
+    --sidebar-background: 40 20% 97%;
+    --sidebar-foreground: 220 30% 25%;
+    --sidebar-primary: 215 50% 23%;
+    --sidebar-primary-foreground: 40 20% 98%;
+    --sidebar-accent: 40 15% 92%;
+    --sidebar-accent-foreground: 220 30% 15%;
+    --sidebar-border: 40 15% 85%;
+    --sidebar-ring: 215 50% 45%;
 
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Chart Colors */
+    --chart-1: 215 50% 45%;
+    --chart-2: 95 40% 45%;
+    --chart-3: 25 75% 55%;
+    --chart-4: 42 70% 48%;
+    --chart-5: 340 50% 55%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 220 35% 8%;
+    --foreground: 40 20% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 220 30% 12%;
+    --card-foreground: 40 20% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 30% 10%;
+    --popover-foreground: 40 20% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 40 20% 95%;
+    --primary-foreground: 220 35% 8%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 220 25% 18%;
+    --secondary-foreground: 40 20% 95%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 220 25% 18%;
+    --muted-foreground: 40 10% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 95 35% 40%;
+    --accent-foreground: 40 20% 98%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    /* African-Inspired (adjusted for dark mode) */
+    --sunset: 25 80% 60%;
+    --sahara: 42 75% 55%;
+    --savanna: 95 45% 45%;
+    --terracotta: 15 65% 55%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Priority Colors (brighter for dark mode) */
+    --priority-p1: 0 80% 60%;
+    --priority-p2: 25 85% 60%;
+    --priority-p3: 45 85% 55%;
+    --priority-p4: 140 45% 50%;
+
+    /* Tier Colors */
+    --tier-1: 215 65% 55%;
+    --tier-2: 280 50% 60%;
+    --tier-3: 340 55% 60%;
+
+    --destructive: 0 75% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 25% 20%;
+    --input: 220 25% 20%;
+    --ring: 40 20% 80%;
+
+    --sidebar-background: 220 35% 6%;
+    --sidebar-foreground: 40 15% 85%;
+    --sidebar-primary: 215 55% 55%;
+    --sidebar-primary-foreground: 220 35% 8%;
+    --sidebar-accent: 220 25% 15%;
+    --sidebar-accent-foreground: 40 20% 95%;
+    --sidebar-border: 220 25% 18%;
+    --sidebar-ring: 215 55% 55%;
   }
 }
 
@@ -99,7 +158,161 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    font-family: 'Noto Sans', 'Noto Sans Arabic', 'Noto Sans Ethiopic', system-ui, sans-serif;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  /* Priority Badge Animations */
+  .priority-p1 {
+    @apply bg-[hsl(var(--priority-p1))] text-[hsl(var(--priority-p1-foreground))];
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  .priority-p2 {
+    @apply bg-[hsl(var(--priority-p2))] text-[hsl(var(--priority-p2-foreground))];
+  }
+
+  .priority-p3 {
+    @apply bg-[hsl(var(--priority-p3))] text-[hsl(var(--priority-p3-foreground))];
+  }
+
+  .priority-p4 {
+    @apply bg-[hsl(var(--priority-p4))] text-[hsl(var(--priority-p4-foreground))];
+  }
+
+  /* Source Tier Badges */
+  .tier-1 {
+    @apply bg-[hsl(var(--tier-1))] text-white;
+  }
+
+  .tier-2 {
+    @apply bg-[hsl(var(--tier-2))] text-white;
+  }
+
+  .tier-3 {
+    @apply bg-[hsl(var(--tier-3))] text-white;
+  }
+
+  /* African Pattern Accent Border */
+  .african-border {
+    border-image: linear-gradient(
+      90deg,
+      hsl(var(--sunset)) 0%,
+      hsl(var(--sahara)) 25%,
+      hsl(var(--savanna)) 50%,
+      hsl(var(--terracotta)) 75%,
+      hsl(var(--sunset)) 100%
+    ) 1;
+  }
+
+  /* Card with subtle African accent */
+  .card-african {
+    @apply relative overflow-hidden;
+  }
+
+  .card-african::before {
+    content: '';
+    @apply absolute top-0 left-0 right-0 h-1;
+    background: linear-gradient(
+      90deg,
+      hsl(var(--sunset)),
+      hsl(var(--sahara)),
+      hsl(var(--savanna))
+    );
+  }
+
+  /* Glass effect for overlays */
+  .glass {
+    @apply bg-background/80 backdrop-blur-md;
+  }
+
+  /* Signal Card Hover */
+  .signal-card {
+    @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5;
+  }
+
+  /* Map Container */
+  .map-container {
+    @apply w-full h-full min-h-[400px] rounded-lg overflow-hidden;
+  }
+}
+
+@layer utilities {
+  /* Glow animations for priority alerts */
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 5px hsl(var(--priority-p1) / 0.5),
+                  0 0 20px hsl(var(--priority-p1) / 0.3);
+    }
+    50% {
+      box-shadow: 0 0 10px hsl(var(--priority-p1) / 0.8),
+                  0 0 30px hsl(var(--priority-p1) / 0.5);
+    }
+  }
+
+  @keyframes slide-in-right {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes fade-in-up {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right 0.3s ease-out;
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 0.4s ease-out;
+  }
+
+  /* Text gradient for branding */
+  .text-gradient-african {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(
+      135deg,
+      hsl(var(--sunset)),
+      hsl(var(--sahara)),
+      hsl(var(--savanna))
+    );
+  }
+
+  /* Scrollbar styling */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-muted rounded-full;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
   }
 }

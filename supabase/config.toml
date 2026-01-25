@@ -1,1 +1,7 @@
 project_id = "jndkoglwwubglslojdic"
+
+[functions.analyze-signal]
+verify_jwt = false
+
+[functions.translate-text]
+verify_jwt = false
