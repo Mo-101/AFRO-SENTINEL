@@ -35,12 +35,10 @@ export function AuthPage() {
     },
   });
 
-  // Redirect if already logged in
+  // Auth disabled for development - always redirect to dashboard
   useEffect(() => {
-    if (user) {
-      navigate('/');
-    }
-  }, [user, navigate]);
+    navigate('/');
+  }, [navigate]);
 
   const onSubmit = async (data: AuthFormValues) => {
     setError(null);
