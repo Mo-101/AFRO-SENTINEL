@@ -258,6 +258,106 @@ const DISEASE_KEYWORDS_MULTILINGUAL: Record<string, DiseaseKeywordEntry> = {
       yo: ["ibà ẹjẹ"],
       sw: ["homa ya kutoka damu"]
     }
+  },
+  // NEW DISEASES FROM CONFIG
+  "pertussis": {
+    name: "Pertussis",
+    category: "respiratory",
+    priority: "P2",
+    keywords: {
+      en: ["pertussis", "whooping cough", "whooping"],
+      ha: ["tarin tari", "cutar tari"],
+      yo: ["ikọ́ ikọ́", "àrùn ikọ́"],
+      sw: ["kifaduro", "kikohozi cha mvua"]
+    }
+  },
+  "tetanus": {
+    name: "Neonatal tetanus",
+    category: "vaccine_preventable",
+    priority: "P1",
+    keywords: {
+      en: ["tetanus", "neonatal tetanus", "lockjaw", "trismus"],
+      ha: ["cutar taurin baki", "karya baki"],
+      yo: ["àrùn ẹnu dídí"],
+      sw: ["pepopunda", "kifafa cha wachanga"]
+    }
+  },
+  "leishmaniasis": {
+    name: "Leishmaniasis",
+    category: "vector_borne",
+    priority: "P2",
+    keywords: {
+      en: ["leishmaniasis", "kala-azar", "visceral leishmaniasis", "cutaneous"],
+      ha: ["kala-azar", "cutar kala-azar"],
+      yo: ["àrùn kala-azar"],
+      sw: ["kala-azar", "usubi"]
+    }
+  },
+  "leptospirosis": {
+    name: "Leptospirosis",
+    category: "zoonotic",
+    priority: "P2",
+    keywords: {
+      en: ["leptospirosis", "weil's disease", "rat fever"],
+      ha: ["cutar bera", "zazzabin bera"],
+      yo: ["àrùn eku"],
+      sw: ["homa ya panya", "leptospirosis"]
+    }
+  },
+  "qfever": {
+    name: "Q fever",
+    category: "zoonotic",
+    priority: "P2",
+    keywords: {
+      en: ["q fever", "query fever", "coxiella"],
+      ha: ["zazzabin q"],
+      yo: ["ibà q"],
+      sw: ["homa ya q"]
+    }
+  },
+  "typhus": {
+    name: "Typhus",
+    category: "vector_borne",
+    priority: "P2",
+    keywords: {
+      en: ["typhus", "epidemic typhus", "murine typhus", "scrub typhus"],
+      ha: ["zazzabin typhus"],
+      yo: ["ibà typhus"],
+      sw: ["homa ya chawa"]
+    }
+  },
+  "hiv": {
+    name: "HIV/AIDS",
+    category: "respiratory",  // Using 'respiratory' as proxy for 'chronic'
+    priority: "P3",
+    keywords: {
+      en: ["hiv", "aids", "human immunodeficiency"],
+      ha: ["cutar kanjamau", "hiv"],
+      yo: ["àrùn kòkòrò hiv", "arun kogbogun"],
+      sw: ["virusi vya ukimwi", "ukimwi"]
+    }
+  },
+  "chikungunya": {
+    name: "Chikungunya",
+    category: "vector_borne",
+    priority: "P2",
+    keywords: {
+      en: ["chikungunya", "chik", "joint fever"],
+      ha: ["zazzabin chikungunya"],
+      yo: ["ibà chikungunya"],
+      sw: ["homa ya chikungunya", "chikungunya"]
+    }
+  },
+  "diphtheria": {
+    name: "Diphtheria",
+    category: "vaccine_preventable",
+    priority: "P1",
+    keywords: {
+      en: ["diphtheria", "corynebacterium"],
+      ha: ["cutar makogwaro"],
+      yo: ["àrùn ọ̀fun"],
+      sw: ["dondakoo", "diphtheria"]
+    }
   }
 };
 
@@ -904,6 +1004,173 @@ async function analyzeSignal(text: string): Promise<any> {
   return null;
 }
 
+// Fetch from ProMED-mail RSS (ISID - International Society for Infectious Diseases)
+async function fetchProMED(): Promise<any[]> {
+  const signals: any[] = [];
+  
+  try {
+    // ProMED RSS feed
+    const url = 'https://promedmail.org/feed/';
+    const response = await fetch(url, {
+      headers: { 
+        'User-Agent': 'AFRO-Sentinel-Watchtower/1.0 (Disease Surveillance System)'
+      }
+    });
+    
+    if (!response.ok) {
+      console.log('ProMED failed:', response.status);
+      return signals;
+    }
+    
+    const xmlText = await response.text();
+    
+    // Parse RSS items
+    const items = xmlText.match(/<item>[\s\S]*?<\/item>/g) || [];
+    
+    for (const item of items.slice(0, 30)) {
+      const titleMatch = item.match(/<title>([^<]+)<\/title>/);
+      const linkMatch = item.match(/<link>([^<]+)<\/link>/);
+      const descMatch = item.match(/<description>([^<]+)<\/description>/);
+      const dateMatch = item.match(/<pubDate>([^<]+)<\/pubDate>/);
+      
+      if (!titleMatch) continue;
+      
+      const title = titleMatch[1].replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+      const description = descMatch?.[1] || '';
+      const fullText = `${title} ${description}`;
+      
+      const countryISO3 = extractCountryISO3(fullText);
+      
+      // Only include Africa-related signals
+      if (!countryISO3 || !AFRO_COUNTRIES.includes(countryISO3)) continue;
+      
+      // Multilingual disease detection
+      const multilingualDiseaseInfo = detectDiseaseMultilingual(fullText);
+      const diseaseInfo = multilingualDiseaseInfo || detectDisease(fullText);
+      
+      // Language detection
+      const langDetection = detectLanguage(fullText);
+      const sourceTier = 'tier_1'; // ProMED is authoritative
+      
+      // Trust score
+      const localKeywordCount = multilingualDiseaseInfo?.matched_keywords?.length || 0;
+      const linguaTrustScore = calculateLinguaTrustScore(
+        langDetection.code, 
+        countryISO3, 
+        sourceTier,
+        localKeywordCount
+      );
+      
+      signals.push({
+        source_id: 'PROMED',
+        source_name: 'ProMED-mail (ISID)',
+        source_url: linkMatch?.[1] || 'https://promedmail.org',
+        source_type: 'official',
+        source_tier: sourceTier,
+        original_text: title,
+        original_language: langDetection.code !== 'en' ? langDetection.code : 'en',
+        location_country: Object.entries(COUNTRY_NAME_TO_ISO3).find(([_, iso]) => iso === countryISO3)?.[0] || countryISO3,
+        location_country_iso: countryISO3,
+        location_lat: COUNTRY_COORDS[countryISO3]?.lat || null,
+        location_lng: COUNTRY_COORDS[countryISO3]?.lng || null,
+        disease_name: diseaseInfo?.name || null,
+        disease_category: diseaseInfo?.category || 'unknown',
+        priority: diseaseInfo?.priority || 'P2',
+        source_timestamp: dateMatch?.[1] ? new Date(dateMatch[1]).toISOString() : new Date().toISOString(),
+        confidence_score: 85,
+        lingua_fidelity_score: linguaTrustScore,
+        signal_type: 'official_report',
+        status: 'new',
+        ingestion_source: 'PROMED-RSS',
+        duplicate_hash: generateHash(linkMatch?.[1] || title),
+      });
+    }
+  } catch (error) {
+    console.error('ProMED error:', error);
+  }
+  
+  return signals;
+}
+
+// Fetch from HDX (Humanitarian Data Exchange) - health datasets
+async function fetchHDX(): Promise<any[]> {
+  const signals: any[] = [];
+  
+  try {
+    // Search for recent health/disease datasets in Africa
+    const url = 'https://data.humdata.org/api/3/action/package_search?q=health+disease+outbreak&fq=groups:africa&rows=20&sort=metadata_modified+desc';
+    
+    const response = await fetch(url, {
+      headers: { 'Accept': 'application/json' }
+    });
+    
+    if (!response.ok) {
+      console.log('HDX failed:', response.status);
+      return signals;
+    }
+    
+    const data = await response.json();
+    const datasets = data.result?.results || [];
+    
+    for (const dataset of datasets) {
+      const title = dataset.title || dataset.name || '';
+      const notes = dataset.notes || '';
+      const fullText = `${title} ${notes}`;
+      
+      // Extract country from groups
+      const groups = dataset.groups || [];
+      let countryISO3: string | null = null;
+      for (const group of groups) {
+        const groupName = (group.name || group.title || '').toLowerCase();
+        const iso3 = extractCountryISO3(groupName) || COUNTRY_NAME_TO_ISO3[groupName];
+        if (iso3 && AFRO_COUNTRIES.includes(iso3)) {
+          countryISO3 = iso3;
+          break;
+        }
+      }
+      
+      if (!countryISO3) {
+        countryISO3 = extractCountryISO3(fullText);
+      }
+      
+      if (!countryISO3 || !AFRO_COUNTRIES.includes(countryISO3)) continue;
+      
+      // Disease detection
+      const multilingualDiseaseInfo = detectDiseaseMultilingual(fullText);
+      const diseaseInfo = multilingualDiseaseInfo || detectDisease(fullText);
+      
+      if (!diseaseInfo) continue; // Only include health-related datasets
+      
+      signals.push({
+        source_id: 'HDX',
+        source_name: 'Humanitarian Data Exchange',
+        source_url: `https://data.humdata.org/dataset/${dataset.name}`,
+        source_type: 'official',
+        source_tier: 'tier_1',
+        original_text: title.substring(0, 500),
+        original_language: 'en',
+        location_country: Object.entries(COUNTRY_NAME_TO_ISO3).find(([_, iso]) => iso === countryISO3)?.[0] || countryISO3,
+        location_country_iso: countryISO3,
+        location_lat: COUNTRY_COORDS[countryISO3]?.lat || null,
+        location_lng: COUNTRY_COORDS[countryISO3]?.lng || null,
+        disease_name: diseaseInfo?.name || null,
+        disease_category: diseaseInfo?.category || 'unknown',
+        priority: diseaseInfo?.priority || 'P3',
+        source_timestamp: dataset.metadata_modified || new Date().toISOString(),
+        confidence_score: 80,
+        signal_type: 'official_report',
+        status: 'new',
+        ingestion_source: 'HDX-CKAN',
+        duplicate_hash: generateHash(dataset.id || title),
+      });
+    }
+  } catch (error) {
+    console.error('HDX error:', error);
+  }
+  
+  return signals;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -916,16 +1183,18 @@ serve(async (req) => {
 
     console.log('Starting signal ingestion...');
     
-    // Fetch from all sources in parallel
-    const [gdeltSignals, reliefwebSignals, whoSignals, allAfricaSignals] = await Promise.all([
+    // Fetch from all sources in parallel (6 sources now)
+    const [gdeltSignals, reliefwebSignals, whoSignals, allAfricaSignals, promedSignals, hdxSignals] = await Promise.all([
       fetchGDELT(),
       fetchReliefWeb(),
       fetchWHO(),
       fetchAllAfrica(),
+      fetchProMED(),
+      fetchHDX(),
     ]);
     
-    const allSignals = [...gdeltSignals, ...reliefwebSignals, ...whoSignals, ...allAfricaSignals];
-    console.log(`Fetched ${allSignals.length} raw signals`);
+    const allSignals = [...gdeltSignals, ...reliefwebSignals, ...whoSignals, ...allAfricaSignals, ...promedSignals, ...hdxSignals];
+    console.log(`Fetched ${allSignals.length} raw signals from 6 sources`);
     
     // Deduplicate by hash
     const existingHashes = new Set<string>();
