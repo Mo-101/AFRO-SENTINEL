@@ -24,8 +24,8 @@ const Index = () => {
   const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   
-  // Real-time P1/P2 alert system
-  const { alerts, dismissAlert } = useRealtimeAlerts({ enabled: true, playSound: true });
+  // Real-time P1/P2 alert system - must be called before any early returns
+  const { alerts, dismissAlert } = useRealtimeAlerts({ enabled: !!user, playSound: true });
 
   // Filter signals by country if not regional view
   const signalFilters = useMemo(() => {
@@ -35,6 +35,7 @@ const Index = () => {
     return { limit: 50 };
   }, [selectedCountry]);
 
+  // ALL hooks must be called before any early returns to follow React's Rules of Hooks
   const { data: signals, isLoading: signalsLoading } = useSignals(signalFilters);
 
   // Filter by country client-side for now
@@ -81,6 +82,7 @@ const Index = () => {
     return { timeline, diseaseDistribution };
   }, [signals]);
 
+  // Early returns AFTER all hooks have been called
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background">
