@@ -195,30 +195,6 @@ export function AuthPage() {
             <p className="mt-4 text-xs text-center text-muted-foreground">
               By continuing, you agree to monitor disease signals responsibly.
             </p>
-
-            {/* Test Credentials - Remove before production */}
-            <div className="mt-6 p-3 rounded-lg bg-muted/50 border border-dashed border-muted-foreground/30">
-              <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
-                <span className="inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                Test Credentials
-              </p>
-              <div className="space-y-1 text-xs font-mono">
-                <p><span className="text-muted-foreground">Email:</span> admin@afrosentinel.test</p>
-                <p><span className="text-muted-foreground">Pass:</span> Admin123!</p>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="w-full mt-2 text-xs h-7"
-                onClick={() => {
-                  form.setValue('email', 'admin@afrosentinel.test');
-                  form.setValue('password', 'Admin123!');
-                }}
-              >
-                Auto-fill credentials
-              </Button>
-            </div>
           </CardContent>
         </Card>
       </div>
