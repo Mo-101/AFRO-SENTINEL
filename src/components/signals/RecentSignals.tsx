@@ -55,9 +55,26 @@ export function RecentSignals({ signals, isLoading, onSignalClick }: RecentSigna
                 <h5 className="text-sm font-bold text-foreground leading-snug group-hover:text-primary transition-colors mb-1">
                   {signal.disease_name || 'Health Signal'} - {signal.location_country}
                 </h5>
+                
+                {/* Local Language First */}
+                {signal.original_language && signal.original_language !== 'en' && (
+                  <div className="mb-1">
+                    <span className="text-[8px] font-bold text-primary uppercase">
+                      🏠 {signal.original_language.toUpperCase()}:
+                    </span>
+                    <p className="text-[10px] text-foreground font-medium italic line-clamp-1">
+                      "{signal.original_text}"
+                    </p>
+                  </div>
+                )}
+                
+                {/* English Translation */}
                 <p className="text-[10px] text-muted-foreground font-medium line-clamp-2">
-                  {signal.original_text || signal.translated_text || 'Monitoring...'}
+                  {signal.original_language !== 'en' && signal.translated_text 
+                    ? `🌐 ${signal.translated_text}`
+                    : signal.original_text || 'Monitoring...'}
                 </p>
+                
                 <div className="flex items-center gap-2 mt-3 flex-wrap">
                   <Badge variant="secondary" className="text-[9px] font-black uppercase">
                     {signal.location_country}
@@ -68,8 +85,8 @@ export function RecentSignals({ signals, isLoading, onSignalClick }: RecentSigna
                     </Badge>
                   )}
                   {signal.original_language && signal.original_language !== 'en' && (
-                    <Badge variant="outline" className="text-[8px]">
-                      🏠 LOCAL
+                    <Badge variant="outline" className="text-[8px] bg-primary/10">
+                      🏠 LOCAL VOICE
                     </Badge>
                   )}
                 </div>

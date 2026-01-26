@@ -83,22 +83,43 @@ export function SignalCard({ signal, onClick }: SignalCardProps) {
       <h4 className="text-lg font-bold text-foreground leading-tight mb-2 group-hover:text-primary transition-colors line-clamp-2">
         {signal.disease_name || 'Health Signal'} - {signal.location_country}
       </h4>
-      {/* Original Text (Lingua Fidelity) */}
+      {/* Original Text in Local Language (Lingua Fidelity) */}
       {signal.original_text && (
-        <div className="shadow-inset p-3 rounded-xl mb-4">
-          <div className="text-[8px] font-semibold text-muted-foreground uppercase mb-1 tracking-wider">
-            {signal.original_language?.toUpperCase() || 'EN'} Transcription
+        <div className="shadow-inset p-3 rounded-xl mb-3">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[8px] font-bold text-primary uppercase tracking-wider">
+              🏠 {signal.original_language?.toUpperCase() || 'LOCAL'} VOICE
+            </span>
+            {signal.lingua_fidelity_score && (
+              <span className="text-[7px] font-medium text-muted-foreground">
+                {signal.lingua_fidelity_score}% fidelity
+              </span>
+            )}
           </div>
-          <p className="text-[11px] text-muted-foreground font-medium italic line-clamp-2 leading-relaxed">
+          <p className="text-[12px] text-foreground font-medium italic line-clamp-2 leading-relaxed">
             "{signal.original_text}"
           </p>
         </div>
       )}
 
-      {/* Summary */}
-      <p className="text-xs text-muted-foreground font-medium leading-relaxed mb-6 line-clamp-3 flex-1">
-        {signal.translated_text || signal.original_text}
-      </p>
+      {/* English Translation (for non-speakers) */}
+      {signal.translated_text && signal.original_language !== 'en' && (
+        <div className="bg-muted/30 p-3 rounded-xl mb-4 border-l-2 border-primary/30">
+          <div className="text-[8px] font-semibold text-muted-foreground uppercase mb-1 tracking-wider">
+            🌐 ENGLISH TRANSLATION
+          </div>
+          <p className="text-[11px] text-muted-foreground font-medium leading-relaxed line-clamp-2">
+            {signal.translated_text}
+          </p>
+        </div>
+      )}
+
+      {/* Fallback if no translation available */}
+      {(!signal.translated_text || signal.original_language === 'en') && (
+        <p className="text-xs text-muted-foreground font-medium leading-relaxed mb-4 line-clamp-3 flex-1">
+          {signal.original_text}
+        </p>
+      )}
 
       {/* Source Attribution */}
       <div className="mb-4 space-y-2.5">
