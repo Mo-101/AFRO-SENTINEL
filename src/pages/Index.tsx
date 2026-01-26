@@ -36,7 +36,7 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   
   // Real-time P1/P2 alert system - must be called before any early returns
-  const { alerts, dismissAlert } = useRealtimeAlerts({ enabled: !!user, playSound: true });
+  const { alerts, dismissAlert, injectTestAlert } = useRealtimeAlerts({ enabled: !!user, playSound: true });
 
   // Filter signals by country if not regional view
   const signalFilters = useMemo(() => {
@@ -188,8 +188,18 @@ const Index = () => {
                 ))}
               </div>
 
-              {/* Right: Icons (Alert, Theme, Account) */}
+              {/* Right: Icons (Test Alert, Alert, Theme, Account) */}
               <div className="flex items-center gap-2">
+                {/* Test Alert Button (for development) */}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={injectTestAlert}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Test Alert
+                </Button>
+                
                 {/* Notifications */}
                 <Button variant="ghost" size="icon" className="relative rounded-xl hover:bg-muted/50">
                   <Bell className="h-5 w-5 text-muted-foreground" />
