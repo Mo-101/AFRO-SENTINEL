@@ -395,4 +395,30 @@
   .scrollbar-thin::-webkit-scrollbar-thumb {
     @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
   }
+
+  /* Auto-dismiss progress animation */
+  @keyframes shrink-width {
+    from { width: 100%; }
+    to { width: 0%; }
+  }
+
+  .animate-shrink-width {
+    animation: shrink-width 10s linear forwards;
+  }
+
+  /* Slide in from right for toasts */
+  @keyframes slide-in-right {
+    from {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
 }
