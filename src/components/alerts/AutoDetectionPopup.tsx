@@ -124,7 +124,7 @@ export function AutoDetectionPopup({ detections, onDismiss }: AutoDetectionPopup
             <h4 className="font-semibold text-sm text-foreground leading-snug">
               {currentDetection.title}
             </h4>
-            <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+            <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
               {currentDetection.description}
             </p>
           </div>
