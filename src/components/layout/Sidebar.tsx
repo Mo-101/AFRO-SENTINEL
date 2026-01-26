@@ -24,13 +24,13 @@ export function Sidebar({ selectedCountry, onSelectCountry, children }: SidebarP
     <div className="w-72 bg-sidebar-background border-r border-sidebar-border flex flex-col h-full shrink-0 relative z-40">
       {/* Header with prominent WHO branding */}
       <div className="p-5 border-b border-sidebar-border sticky top-0 z-10 bg-sidebar-background">
-        <div className="flex items-center gap-4">
-          {/* Large WHO Logo with neuromorphic container */}
-          <div className="neuro-card p-2 rounded-2xl">
+        <div className="flex items-center gap-3">
+          {/* Large WHO Logo with neuromorphic container - fills container */}
+          <div className="neuro-card p-1 rounded-2xl">
             <img 
               src={whoAfroLogo} 
               alt="WHO African Region" 
-              className="w-14 h-14 rounded-xl object-cover"
+              className="w-20 h-20 rounded-xl object-contain"
             />
           </div>
           <div className="flex-1">
