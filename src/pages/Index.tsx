@@ -15,7 +15,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSignals, Signal } from '@/hooks/useSignals';
 import { useRealtimeAlerts } from '@/hooks/useRealtimeAlerts';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LayoutDashboard, Radio, Database, Map as MapIcon } from 'lucide-react';
 
@@ -122,28 +121,36 @@ const Index = () => {
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col overflow-hidden">
-          {/* Tabs Navigation */}
-          <div className="border-b bg-card/50 px-6 py-2">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="bg-muted/50">
-                <TabsTrigger value="dashboard" className="gap-2">
-                  <LayoutDashboard className="w-4 h-4" />
-                  Dashboard
-                </TabsTrigger>
-                <TabsTrigger value="signals" className="gap-2">
-                  <Radio className="w-4 h-4" />
-                  Signals
-                </TabsTrigger>
-                <TabsTrigger value="sources" className="gap-2">
-                  <Database className="w-4 h-4" />
-                  Sources
-                </TabsTrigger>
-                <TabsTrigger value="map" className="gap-2">
-                  <MapIcon className="w-4 h-4" />
-                  Map
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+          {/* Tabs Navigation - Neuromorphic Style */}
+          <div className="border-b bg-card/30 px-6 py-3">
+            <div className="flex gap-2">
+              {[
+                { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+                { id: 'signals', icon: Radio, label: 'Signals' },
+                { id: 'sources', icon: Database, label: 'Sources' },
+                { id: 'map', icon: MapIcon, label: 'Map' },
+              ].map(({ id, icon: Icon, label }) => (
+                <button
+                  key={id}
+                  onClick={() => setActiveTab(id)}
+                  className={`
+                    flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                    ${activeTab === id 
+                      ? 'neuro-card text-primary' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                    }
+                  `}
+                >
+                  <div className={`
+                    w-8 h-8 rounded-lg flex items-center justify-center transition-all
+                    ${activeTab === id ? 'shadow-inset bg-primary/10' : 'bg-background/50'}
+                  `}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <span>{label}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Tab Content */}

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AFRO_COUNTRIES } from '@/lib/constants';
 import { Globe, Settings2, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import whoAfroLogo from '@/assets/who-afro-logo.png';
 
 interface SidebarProps {
   selectedCountry: string;
@@ -21,44 +22,67 @@ export function Sidebar({ selectedCountry, onSelectCountry, children }: SidebarP
 
   return (
     <div className="w-72 bg-sidebar-background border-r border-sidebar-border flex flex-col h-full shrink-0 relative z-40">
-      {/* Header */}
-      <div className="p-6 border-b border-sidebar-border sticky top-0 z-10 bg-sidebar-background">
-        <h1 className="text-xl font-black text-sidebar-foreground tracking-tighter uppercase">
-          PDX AFRO <span className="text-savanna">INTEL</span>
-        </h1>
-        <div className="flex items-center gap-2 mt-2">
-          <span className="w-2 h-2 bg-savanna rounded-full animate-pulse" />
-          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-            System Online
-          </span>
+      {/* Header with prominent WHO branding */}
+      <div className="p-5 border-b border-sidebar-border sticky top-0 z-10 bg-sidebar-background">
+        <div className="flex items-center gap-4">
+          {/* Large WHO Logo with neuromorphic container */}
+          <div className="neuro-card p-2 rounded-2xl">
+            <img 
+              src={whoAfroLogo} 
+              alt="WHO African Region" 
+              className="w-14 h-14 rounded-xl object-cover"
+            />
+          </div>
+          <div className="flex-1">
+            <h1 className="text-base font-bold text-sidebar-foreground leading-tight">
+              AFRO Sentinel
+            </h1>
+            <p className="text-xs font-semibold text-primary">Watchtower</p>
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+              <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">
+                Online
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Tab Switcher */}
-      <div className="px-6 py-4 flex gap-2 border-b border-sidebar-border/50">
+      {/* Tab Switcher - Neuromorphic Style */}
+      <div className="px-4 py-4 flex gap-3 border-b border-sidebar-border/50">
         <button
           onClick={() => setActiveTab('states')}
           className={cn(
-            'flex-1 flex flex-col items-center py-3 rounded-xl transition-all',
+            'flex-1 flex flex-col items-center py-3 rounded-xl transition-all duration-200',
             activeTab === 'states'
-              ? 'bg-sidebar-accent text-savanna border border-sidebar-border shadow-xl'
-              : 'text-muted-foreground hover:text-sidebar-foreground'
+              ? 'neuro-card text-primary'
+              : 'bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted/50'
           )}
         >
-          <Globe className="w-4 h-4 mb-1" />
-          <span className="text-[9px] font-black uppercase tracking-widest">States</span>
+          <div className={cn(
+            'w-8 h-8 rounded-lg flex items-center justify-center mb-1.5 transition-all',
+            activeTab === 'states' ? 'shadow-inset bg-primary/10' : 'bg-background/50'
+          )}>
+            <Globe className="w-4 h-4" />
+          </div>
+          <span className="text-[10px] font-semibold">States</span>
         </button>
         <button
           onClick={() => setActiveTab('filters')}
           className={cn(
-            'flex-1 flex flex-col items-center py-3 rounded-xl transition-all',
+            'flex-1 flex flex-col items-center py-3 rounded-xl transition-all duration-200',
             activeTab === 'filters'
-              ? 'bg-sidebar-accent text-savanna border border-sidebar-border shadow-xl'
-              : 'text-muted-foreground hover:text-sidebar-foreground'
+              ? 'neuro-card text-primary'
+              : 'bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted/50'
           )}
         >
-          <Filter className="w-4 h-4 mb-1" />
-          <span className="text-[9px] font-black uppercase tracking-widest">Filters</span>
+          <div className={cn(
+            'w-8 h-8 rounded-lg flex items-center justify-center mb-1.5 transition-all',
+            activeTab === 'filters' ? 'shadow-inset bg-primary/10' : 'bg-background/50'
+          )}>
+            <Filter className="w-4 h-4" />
+          </div>
+          <span className="text-[10px] font-semibold">Filters</span>
         </button>
       </div>
 
