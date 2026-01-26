@@ -16,7 +16,7 @@ export function DashboardAnalytics({ timelineData = [], diseaseDistribution = []
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Signal Trend Timeline - Area Chart */}
-      <Card className="lg:col-span-2 border-0 shadow-premium overflow-hidden">
+      <Card className="lg:col-span-2 border-0 neuro-card overflow-hidden">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-semibold flex items-center">
             <Clock className="w-5 h-5 mr-2 text-muted-foreground" />
@@ -92,7 +92,7 @@ export function DashboardAnalytics({ timelineData = [], diseaseDistribution = []
       </Card>
 
       {/* Disease Distribution */}
-      <Card className="border-0 shadow-premium">
+      <Card className="border-0 neuro-card">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-semibold">Top Event Types</CardTitle>
           <p className="text-xs text-muted-foreground">Distribution by category</p>

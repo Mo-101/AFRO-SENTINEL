@@ -20,7 +20,7 @@ interface StatItemProps {
 function StatItem({ label, value, icon, trend, accentColor = 'text-primary', isLoading }: StatItemProps) {
   if (isLoading) {
     return (
-      <Card className="border-0 shadow-soft">
+      <Card className="border-0 neuro-card">
         <CardContent className="p-5">
           <div className="flex justify-between items-start">
             <div className="space-y-2">
@@ -35,7 +35,7 @@ function StatItem({ label, value, icon, trend, accentColor = 'text-primary', isL
   }
 
   return (
-    <Card className="border-0 shadow-soft hover:shadow-premium transition-shadow duration-300">
+    <Card className="border-0 neuro-card transition-all duration-300 hover:scale-[1.02]">
       <CardContent className="p-5">
         <div className="flex justify-between items-start">
           <div>
@@ -53,7 +53,7 @@ function StatItem({ label, value, icon, trend, accentColor = 'text-primary', isL
               )}
             </div>
           </div>
-          <div className={cn('p-3 rounded-xl bg-muted/50', accentColor)}>
+          <div className={cn('p-3 rounded-xl shadow-inset', accentColor, 'bg-muted/30')}>
             {icon}
           </div>
         </div>
@@ -76,13 +76,13 @@ export function StatsSidebar() {
   const triageRate = total > 0 ? Math.round((triaged / total) * 100) : 0;
 
   return (
-    <div className="w-80 bg-card/50 backdrop-blur-sm border-l hidden xl:flex flex-col h-full shrink-0">
+    <div className="w-80 bg-background/50 backdrop-blur-sm border-l border-border/50 hidden xl:flex flex-col h-full shrink-0">
       {/* User Profile Card */}
-      <div className="p-6 border-b">
-        <Card className="border-0 shadow-soft bg-gradient-to-br from-card to-muted/30">
+      <div className="p-6 border-b border-border/50">
+        <Card className="border-0 neuro-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-4">
-              <Avatar className="h-12 w-12 border-2 border-primary/20">
+              <Avatar className="h-12 w-12 shadow-soft">
                 <AvatarFallback className="bg-primary/10 text-primary font-bold">
                   {userInitials}
                 </AvatarFallback>
@@ -92,8 +92,7 @@ export function StatsSidebar() {
                   {user?.email?.split('@')[0] || 'Analyst'}
                 </p>
                 <Badge 
-                  variant="secondary" 
-                  className="mt-1 text-[10px] font-semibold uppercase tracking-wider"
+                  className="mt-1 text-[10px] font-semibold uppercase tracking-wider bg-primary/10 text-primary border-0"
                 >
                   {role || 'Viewer'}
                 </Badge>
@@ -144,7 +143,7 @@ export function StatsSidebar() {
         />
 
         {/* Triage Completion Ring */}
-        <Card className="border-0 shadow-soft mt-6">
+        <Card className="border-0 neuro-card mt-6">
           <CardContent className="p-6 flex flex-col items-center">
             <CircularProgress
               value={triageRate}
@@ -156,7 +155,7 @@ export function StatsSidebar() {
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t">
+      <div className="p-4 border-t border-border/50">
         <p className="text-[10px] text-muted-foreground text-center">
           Stats refresh automatically
         </p>
