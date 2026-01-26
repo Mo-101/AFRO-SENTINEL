@@ -15,31 +15,10 @@ interface AlertWithMeta extends AutoDetection {
 }
 
 export function useRealtimeAlerts(options: UseRealtimeAlertsOptions = {}) {
-  const { enabled = true, playSound = true, maxAlerts = 5, autoDismissMs = 10000 } = options;
+  const { enabled = true, maxAlerts = 5, autoDismissMs = 10000 } = options;
   const [alerts, setAlerts] = useState<AlertWithMeta[]>([]);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const processedIds = useRef<Set<string>>(new Set());
   const dismissTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
-
-  // Initialize audio element
-  useEffect(() => {
-    if (typeof window !== 'undefined' && playSound) {
-      // Create a simple beep sound using Web Audio API
-      audioRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2JfHJlcG5wdH55c21mbmx0eHVuZ2hnaG9zcG5rbnFuc3RzcXBxc3R1dXd4eXt8fX5+f4GCg4SGh4iJiouMjY6PkJGSkpOUlJWWl5iYmZqbm5ydnZ6fn6ChoaKjpKSlpqanqKmpqqurq6ytra6vr6+wsLGxsrKzs7S0tba2t7e4uLm5uru7vLy9vb6+v7/AwMHBwsLDw8TExcXGxsfHyMjJycrKy8vMzM3Nzs7Pz9DQ0dHS0tPT1NTV1dbW19fY2NnZ2trb29zc3d3e3t/f4ODh4eLi4+Pk5OXl5ubn5+jo6enq6uvr7Ozs7e3u7u/v8PDx8fLy8/P09PX19vb39/j4+fn6+vv7/Pz9/f7+//8AAAAA');
-    }
-    return () => {
-      audioRef.current = null;
-    };
-  }, [playSound]);
-
-  const playAlertSound = useCallback(() => {
-    if (audioRef.current && playSound) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {
-        // Ignore autoplay errors - user hasn't interacted yet
-      });
-    }
-  }, [playSound]);
 
   const mapSignalToDetection = useCallback((signal: Signal): AutoDetection => {
     const isP1 = signal.priority === 'P1';
@@ -145,11 +124,6 @@ export function useRealtimeAlerts(options: UseRealtimeAlertsOptions = {}) {
 
           // Schedule auto-dismiss
           scheduleAutoDismiss(newSignal.id);
-
-          // Play sound for P1 alerts
-          if (newSignal.priority === 'P1') {
-            playAlertSound();
-          }
         }
       )
       .subscribe();
@@ -157,7 +131,7 @@ export function useRealtimeAlerts(options: UseRealtimeAlertsOptions = {}) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [enabled, maxAlerts, mapSignalToDetection, playAlertSound, scheduleAutoDismiss]);
+  }, [enabled, maxAlerts, mapSignalToDetection, scheduleAutoDismiss]);
 
   return {
     alerts,
