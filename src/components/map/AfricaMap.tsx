@@ -6,7 +6,7 @@ import { MAPBOX_TOKEN, AFRO_COUNTRIES } from '@/lib/constants';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Layers, ZoomIn, ZoomOut, Locate, AlertTriangle, Sun, Moon, Sunrise, Sunset } from 'lucide-react';
+import { Layers, ZoomIn, ZoomOut, Locate, AlertTriangle, Sun, Moon, Sunrise, Sunset, Wind } from 'lucide-react';
 
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
@@ -67,6 +67,7 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
   const popup = useRef<mapboxgl.Popup | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [showMarkers, setShowMarkers] = useState(true);
+  const [showWind, setShowWind] = useState(true);
   const [lightPreset, setLightPreset] = useState<LightPreset>('day');
 
   // Initialize map with Mapbox Standard style
@@ -214,7 +215,38 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
         },
       });
 
-      // === INTERACTIONS ===
+      // === WIND PARTICLE LAYER ===
+      // Using GFS (Global Forecast System) wind data from Mapbox
+      m.addSource('wind', {
+        type: 'raster-array',
+        url: 'mapbox://mapbox.gfs-winds',
+        tileSize: 512,
+      });
+
+      m.addLayer({
+        id: 'wind-particles',
+        type: 'raster-particle',
+        source: 'wind',
+        'source-layer': 'wind',
+        slot: 'top',
+        paint: {
+          'raster-particle-speed-factor': 0.4,
+          'raster-particle-fade-opacity-factor': 0.9,
+          'raster-particle-reset-rate-factor': 0.4,
+          'raster-particle-count': 2048,
+          'raster-particle-max-speed': 40,
+          'raster-particle-color': [
+            'interpolate',
+            ['linear'],
+            ['raster-particle-speed'],
+            1.5, 'rgba(134, 239, 172, 0.4)',  // Light green - gentle
+            4, 'rgba(56, 189, 248, 0.5)',    // Sky blue - moderate  
+            8, 'rgba(14, 165, 233, 0.6)',    // Blue - strong
+            15, 'rgba(6, 182, 212, 0.7)',    // Cyan - very strong
+            25, 'rgba(20, 184, 166, 0.8)',   // Teal - extreme
+          ],
+        },
+      });
 
       // Click on cluster: zoom in
       m.on('click', 'clusters', (e) => {
@@ -306,6 +338,18 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
     });
   }, [showMarkers, mapLoaded]);
 
+  // Toggle wind layer visibility
+  useEffect(() => {
+    if (!map.current || !mapLoaded || !map.current.isStyleLoaded()) return;
+    try {
+      if (map.current.getLayer('wind-particles')) {
+        map.current.setLayoutProperty('wind-particles', 'visibility', showWind ? 'visible' : 'none');
+      }
+    } catch (e) {
+      // Ignore if style not ready
+    }
+  }, [showWind, mapLoaded]);
+
   // Update light preset
   useEffect(() => {
     if (!map.current || !mapLoaded || !map.current.isStyleLoaded()) return;
@@ -392,6 +436,19 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
             </Button>
           </TooltipTrigger>
           <TooltipContent side="left">Toggle Signal Markers</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="icon"
+              variant={showWind ? 'default' : 'secondary'}
+              onClick={() => setShowWind(!showWind)}
+              className="h-8 w-8 bg-card/90 backdrop-blur"
+            >
+              <Wind className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="left">Toggle Wind Particles</TooltipContent>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
