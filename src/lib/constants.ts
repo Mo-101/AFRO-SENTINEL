@@ -126,7 +126,9 @@ export interface ApiSource {
 }
 
 export const API_SOURCES: ApiSource[] = [
-  // TIER 1 - Official & Institutional
+  // =====================================================
+  // TIER 1 - Official & Institutional Sources
+  // =====================================================
   {
     source_id: 'GDELT-V2',
     source_name: 'GDELT Project 2.0',
@@ -152,6 +154,32 @@ export const API_SOURCES: ApiSource[] = [
     data_format: 'JSON',
   },
   {
+    source_id: 'WHO-DON',
+    source_name: 'WHO Disease Outbreak News',
+    status: 'active',
+    base_url: 'https://www.who.int/feeds/entity/csr/don/en/rss.xml',
+    source_type: 'Official RSS',
+    category: 'Official',
+    coverage: 'Global',
+    priority: 1,
+    auth_type: 'None',
+    data_format: 'RSS',
+  },
+  // NEW: WHO AFRO Weekly Bulletins
+  {
+    source_id: 'WHO-AFRO-BULLETIN',
+    source_name: 'WHO AFRO Weekly Bulletins',
+    status: 'active',
+    base_url: 'https://www.afro.who.int/health-topics/disease-outbreaks/outbreaks-and-other-emergencies-updates',
+    documentation_url: 'https://www.afro.who.int/health-topics/disease-outbreaks',
+    source_type: 'Official RSS',
+    category: 'Official',
+    coverage: 'Africa',
+    priority: 1,
+    auth_type: 'None',
+    data_format: 'RSS',
+  },
+  {
     source_id: 'AFRICA-CDC',
     source_name: 'Africa CDC',
     status: 'active',
@@ -162,6 +190,20 @@ export const API_SOURCES: ApiSource[] = [
     priority: 1,
     auth_type: 'None',
     data_format: 'RSS',
+  },
+  // NEW: Africa CDC EBS Reports
+  {
+    source_id: 'AFRICA-CDC-EBS',
+    source_name: 'Africa CDC Event-Based Surveillance',
+    status: 'active',
+    base_url: 'https://africacdc.org/disease-outbreak/',
+    documentation_url: 'https://africacdc.org/surveillance-and-disease-intelligence/',
+    source_type: 'Official EBS',
+    category: 'Official',
+    coverage: 'Africa',
+    priority: 1,
+    auth_type: 'None',
+    data_format: 'HTML/JSON',
   },
   {
     source_id: 'HDX',
@@ -188,6 +230,18 @@ export const API_SOURCES: ApiSource[] = [
     data_format: 'JSON',
   },
   {
+    source_id: 'OCHA-FTS',
+    source_name: 'OCHA Financial Tracking Service',
+    status: 'active',
+    base_url: 'https://api.hpc.tools/v1/public/fts/flow',
+    source_type: 'Official API',
+    category: 'Humanitarian',
+    coverage: 'Global',
+    priority: 1,
+    auth_type: 'None',
+    data_format: 'JSON',
+  },
+  {
     source_id: 'APO-AFRICA',
     source_name: 'APO Group Africa Newsroom',
     status: 'active',
@@ -200,7 +254,9 @@ export const API_SOURCES: ApiSource[] = [
     data_format: 'RSS',
   },
   
+  // =====================================================
   // TIER 2 - Local Language Sources (GRASSROOTS)
+  // =====================================================
   {
     source_id: 'BBC-HAUSA',
     source_name: 'BBC Hausa',
@@ -237,6 +293,58 @@ export const API_SOURCES: ApiSource[] = [
     auth_type: 'None',
     data_format: 'RSS',
   },
+  // NEW: BBC Arabic for North Africa
+  {
+    source_id: 'BBC-ARABIC',
+    source_name: 'BBC Arabic',
+    status: 'active',
+    base_url: 'https://feeds.bbci.co.uk/arabic/rss.xml',
+    source_type: 'Local Language RSS',
+    category: 'Local_Language',
+    coverage: 'Egypt, Sudan, Libya, Tunisia, Algeria, Morocco',
+    priority: 2,
+    auth_type: 'None',
+    data_format: 'RSS',
+  },
+  // NEW: RFI French Africa
+  {
+    source_id: 'RFI-AFRIQUE',
+    source_name: 'RFI Afrique (French)',
+    status: 'active',
+    base_url: 'https://www.rfi.fr/fr/afrique/rss',
+    source_type: 'Local Language RSS',
+    category: 'Local_Language',
+    coverage: 'Francophone Africa (20+ countries)',
+    priority: 2,
+    auth_type: 'None',
+    data_format: 'RSS',
+  },
+  // NEW: VOA Portuguese for Lusophone Africa
+  {
+    source_id: 'VOA-PORTUGUESE',
+    source_name: 'VOA Português África',
+    status: 'active',
+    base_url: 'https://www.voaportugues.com/api/z_pqyepp_qyi',
+    source_type: 'Local Language RSS',
+    category: 'Local_Language',
+    coverage: 'Angola, Mozambique, Guinea-Bissau, Cabo Verde, São Tomé',
+    priority: 2,
+    auth_type: 'None',
+    data_format: 'RSS',
+  },
+  // NEW: Al Jazeera Arabic for North/East Africa
+  {
+    source_id: 'ALJAZEERA-ARABIC',
+    source_name: 'Al Jazeera Arabic',
+    status: 'active',
+    base_url: 'https://www.aljazeera.net/aljazeerarss/a7c186be-1baa-4bd4-9d80-a84db769f779/73d0e1b4-532f-45ef-b135-bfdff8b8cab9',
+    source_type: 'Local Language RSS',
+    category: 'Local_Language',
+    coverage: 'North Africa, Sudan, Somalia, Djibouti',
+    priority: 2,
+    auth_type: 'None',
+    data_format: 'RSS',
+  },
   {
     source_id: 'ALLAFRICA',
     source_name: 'AllAfrica News',
@@ -262,7 +370,9 @@ export const API_SOURCES: ApiSource[] = [
     data_format: 'RSS',
   },
   
+  // =====================================================
   // TIER 2 - Local Newspapers
+  // =====================================================
   {
     source_id: 'VANGUARD-NG',
     source_name: 'Vanguard Nigeria',
@@ -311,8 +421,62 @@ export const API_SOURCES: ApiSource[] = [
     auth_type: 'None',
     data_format: 'RSS',
   },
+  // NEW: Jeune Afrique (French - influential)
+  {
+    source_id: 'JEUNE-AFRIQUE',
+    source_name: 'Jeune Afrique',
+    status: 'active',
+    base_url: 'https://www.jeuneafrique.com/feed/',
+    source_type: 'Pan-African Magazine',
+    category: 'Local_Media',
+    coverage: 'Francophone Africa',
+    priority: 2,
+    auth_type: 'None',
+    data_format: 'RSS',
+  },
+  // NEW: Le Monde Afrique
+  {
+    source_id: 'LEMONDE-AFRIQUE',
+    source_name: 'Le Monde Afrique',
+    status: 'active',
+    base_url: 'https://www.lemonde.fr/afrique/rss_full.xml',
+    source_type: 'International French',
+    category: 'Local_Media',
+    coverage: 'Francophone Africa',
+    priority: 2,
+    auth_type: 'None',
+    data_format: 'RSS',
+  },
+  // NEW: Jornal de Angola
+  {
+    source_id: 'JORNAL-ANGOLA',
+    source_name: 'Jornal de Angola',
+    status: 'active',
+    base_url: 'https://www.jornaldeangola.ao/ao/rss/',
+    source_type: 'Local Newspaper',
+    category: 'Local_Media',
+    coverage: 'Angola',
+    priority: 2,
+    auth_type: 'None',
+    data_format: 'RSS',
+  },
+  // NEW: O País Moçambique
+  {
+    source_id: 'OPAIS-MOZ',
+    source_name: 'O País Moçambique',
+    status: 'active',
+    base_url: 'https://opais.co.mz/feed/',
+    source_type: 'Local Newspaper',
+    category: 'Local_Media',
+    coverage: 'Mozambique',
+    priority: 2,
+    auth_type: 'None',
+    data_format: 'RSS',
+  },
   
+  // =====================================================
   // TIER 3 - Citizen Journalism & Community
+  // =====================================================
   {
     source_id: 'SAHARA-REPORTERS',
     source_name: 'Sahara Reporters',
@@ -325,34 +489,6 @@ export const API_SOURCES: ApiSource[] = [
     auth_type: 'None',
     data_format: 'RSS',
   },
-  
-  // NEW SOURCES - DHIS2 ALTERNATIVES (Tier 1)
-  {
-    source_id: 'WHO-DON',
-    source_name: 'WHO Disease Outbreak News',
-    status: 'active',
-    base_url: 'https://www.who.int/feeds/entity/csr/don/en/rss.xml',
-    source_type: 'Official RSS',
-    category: 'Official',
-    coverage: 'Global (Africa focus)',
-    priority: 1,
-    auth_type: 'None',
-    data_format: 'RSS',
-  },
-  {
-    source_id: 'OCHA-FTS',
-    source_name: 'OCHA Financial Tracking Service',
-    status: 'active',
-    base_url: 'https://api.hpc.tools/v1/public/fts/flow',
-    source_type: 'Official API',
-    category: 'Humanitarian',
-    coverage: 'Global (Africa focus)',
-    priority: 1,
-    auth_type: 'None',
-    data_format: 'JSON',
-  },
-  
-  // NEW SOURCES - SOCIAL MEDIA ALTERNATIVES (Tier 3)
   {
     source_id: 'REDDIT-AFRICA',
     source_name: 'Reddit r/Africa',
