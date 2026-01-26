@@ -23,23 +23,24 @@ export function Sidebar({ selectedCountry, onSelectCountry, children }: SidebarP
   return (
     <div className="w-72 bg-sidebar-background border-r border-sidebar-border flex flex-col h-full shrink-0 relative z-40">
       {/* Header with prominent WHO branding */}
-      <div className="p-5 border-b border-sidebar-border sticky top-0 z-10 bg-sidebar-background">
-        <div className="flex items-center gap-3">
-          {/* Large WHO Logo with neuromorphic container - fills container */}
-          <div className="neuro-card p-1 rounded-2xl">
+      {/* Header with prominent WHO branding - expanded vertical space */}
+      <div className="p-4 border-b border-sidebar-border sticky top-0 z-10 bg-sidebar-background">
+        <div className="flex flex-col items-center text-center gap-3">
+          {/* Large WHO Logo - fills container with minimal margin */}
+          <div className="neuro-card p-1.5 rounded-2xl w-full max-w-[200px]">
             <img 
               src={whoAfroLogo} 
               alt="WHO African Region" 
-              className="w-20 h-20 rounded-xl object-contain"
+              className="w-full h-auto rounded-xl object-contain"
             />
           </div>
-          <div className="flex-1">
-            <h1 className="text-base font-bold text-sidebar-foreground leading-tight">
+          <div className="w-full">
+            <h1 className="text-lg font-bold text-sidebar-foreground leading-tight">
               AFRO Sentinel
             </h1>
             <p className="text-xs font-semibold text-primary">Watchtower</p>
-            <div className="flex items-center gap-1.5 mt-1">
-              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+            <div className="flex items-center justify-center gap-1.5 mt-2">
+              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
               <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">
                 Online
               </span>
