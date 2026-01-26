@@ -75,6 +75,10 @@
     /* UI Elements */
     --border: 40 15% 88%;
     --input: 40 15% 88%;
+    
+    /* Premium shadows and effects */
+    --shadow-soft: 0 4px 20px -4px hsl(220 30% 15% / 0.08);
+    --shadow-premium: 0 8px 30px -8px hsl(220 30% 15% / 0.12), 0 4px 10px -4px hsl(220 30% 15% / 0.06);
     --ring: 215 50% 23%;
     --radius: 0.625rem;
 
@@ -141,6 +145,10 @@
     --border: 220 25% 20%;
     --input: 220 25% 20%;
     --ring: 40 20% 80%;
+    
+    /* Premium shadows for dark mode */
+    --shadow-soft: 0 4px 20px -4px hsl(0 0% 0% / 0.3);
+    --shadow-premium: 0 8px 30px -8px hsl(0 0% 0% / 0.4), 0 4px 10px -4px hsl(0 0% 0% / 0.2);
 
     --sidebar-background: 220 35% 6%;
     --sidebar-foreground: 40 15% 85%;
@@ -245,6 +253,15 @@
   /* Map Container */
   .map-container {
     @apply w-full h-full min-h-[400px] rounded-lg overflow-hidden;
+  }
+
+  /* Premium Shadow Classes */
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .shadow-premium {
+    box-shadow: var(--shadow-premium);
   }
 }
 

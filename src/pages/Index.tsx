@@ -3,10 +3,11 @@ import { Navigate } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { DashboardAnalytics } from '@/components/dashboard/DashboardAnalytics';
+import { DashboardHero } from '@/components/dashboard/DashboardHero';
+import { StatsSidebar } from '@/components/dashboard/StatsSidebar';
 import { SignalCard } from '@/components/signals/SignalCard';
 import { SignalModal } from '@/components/signals/SignalModal';
 import { AlertsList } from '@/components/signals/AlertsList';
-import { RecentSignals } from '@/components/signals/RecentSignals';
 import { SourceRegistry } from '@/components/sources/SourceRegistry';
 import { AfricaMap } from '@/components/map/AfricaMap';
 import { AutoDetectionPopup } from '@/components/alerts/AutoDetectionPopup';
@@ -107,9 +108,9 @@ const Index = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Authenticated full dashboard
+  // Authenticated full dashboard with premium layout
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-background via-background to-primary/5 overflow-hidden">
       <Header />
       
       <div className="flex-1 flex overflow-hidden">
@@ -150,20 +151,11 @@ const Index = () => {
             <ScrollArea className="flex-1">
               <div className="p-6">
                 {activeTab === 'dashboard' && (
-                  <div className="space-y-6">
-                    {/* Country Header */}
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h1 className="text-2xl font-black text-foreground uppercase tracking-tight">
-                          {selectedCountry}
-                        </h1>
-                        <p className="text-muted-foreground text-sm">
-                          Real-time epidemic intelligence overview
-                        </p>
-                      </div>
-                    </div>
+                  <div className="space-y-6 animate-fade-in">
+                    {/* Hero Section */}
+                    <DashboardHero />
 
-                    {/* Analytics */}
+                    {/* Analytics Charts */}
                     <DashboardAnalytics
                       timelineData={analyticsData.timeline}
                       diseaseDistribution={analyticsData.diseaseDistribution}
@@ -171,7 +163,7 @@ const Index = () => {
 
                     {/* Signal Cards Grid */}
                     <div>
-                      <h2 className="text-lg font-black text-foreground uppercase tracking-tight mb-4">
+                      <h2 className="text-lg font-bold text-foreground tracking-tight mb-4">
                         Active Signals
                       </h2>
                       {signalsLoading ? (
@@ -182,12 +174,17 @@ const Index = () => {
                         </div>
                       ) : (
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                          {filteredSignals.slice(0, 9).map((signal) => (
-                            <SignalCard
-                              key={signal.id}
-                              signal={signal}
-                              onClick={setSelectedSignal}
-                            />
+                          {filteredSignals.slice(0, 9).map((signal, index) => (
+                            <div 
+                              key={signal.id} 
+                              className="animate-fade-in-up"
+                              style={{ animationDelay: `${index * 50}ms` }}
+                            >
+                              <SignalCard
+                                signal={signal}
+                                onClick={setSelectedSignal}
+                              />
+                            </div>
                           ))}
                         </div>
                       )}
@@ -249,14 +246,8 @@ const Index = () => {
               </div>
             </ScrollArea>
 
-            {/* Right Sidebar - Recent Signals (only on dashboard) */}
-            {activeTab === 'dashboard' && (
-              <RecentSignals
-                signals={filteredSignals}
-                isLoading={signalsLoading}
-                onSignalClick={setSelectedSignal}
-              />
-            )}
+            {/* Right Sidebar - Stats Panel (only on dashboard) */}
+            {activeTab === 'dashboard' && <StatsSidebar />}
           </div>
         </main>
       </div>
