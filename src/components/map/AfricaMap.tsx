@@ -6,7 +6,7 @@ import { MAPBOX_TOKEN, AFRO_COUNTRIES } from '@/lib/constants';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Layers, ZoomIn, ZoomOut, Locate, AlertTriangle, Wind } from 'lucide-react';
+import { Layers, ZoomIn, ZoomOut, Locate, AlertTriangle, Sun, Moon, Sunrise, Sunset } from 'lucide-react';
 
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
@@ -17,17 +17,19 @@ interface AfricaMapProps {
   onCountrySelect?: (country: string) => void;
 }
 
-// Color scale for choropleth severity
-const getSeverityColor = (count: number, hasP1: boolean): string => {
-  if (hasP1) return '#dc2626';
-  if (count >= 10) return '#ea580c';
-  if (count >= 5) return '#d97706';
-  if (count >= 2) return '#ca8a04';
-  if (count >= 1) return '#65a30d';
-  return '#374151';
+// Light presets for Mapbox Standard
+type LightPreset = 'dawn' | 'day' | 'dusk' | 'night';
+
+const LIGHT_PRESETS: LightPreset[] = ['dawn', 'day', 'dusk', 'night'];
+
+const LIGHT_PRESET_ICONS: Record<LightPreset, React.ReactNode> = {
+  dawn: <Sunrise className="h-4 w-4" />,
+  day: <Sun className="h-4 w-4" />,
+  dusk: <Sunset className="h-4 w-4" />,
+  night: <Moon className="h-4 w-4" />,
 };
 
-// Priority colors for markers
+// Priority colors for markers with emissive support
 const PRIORITY_COLORS: Record<string, string> = {
   P1: '#dc2626',
   P2: '#ea580c',
@@ -65,36 +67,24 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
   const popup = useRef<mapboxgl.Popup | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [showMarkers, setShowMarkers] = useState(true);
-  const [showWindLayer, setShowWindLayer] = useState(false);
+  const [lightPreset, setLightPreset] = useState<LightPreset>('day');
 
-  // Compute country-level statistics
-  const countryStats = useCallback(() => {
-    const stats: Record<string, { count: number; hasP1: boolean }> = {};
-    signals.forEach(signal => {
-      const code = signal.location_country_iso || '';
-      if (!stats[code]) stats[code] = { count: 0, hasP1: false };
-      stats[code].count += 1;
-      if (signal.priority === 'P1') stats[code].hasP1 = true;
-    });
-    return stats;
-  }, [signals]);
-
-  // Initialize map
+  // Initialize map with Mapbox Standard style
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/dark-v11',
+      style: 'mapbox://styles/mapbox/standard',
       center: [20, 0],
       zoom: 3,
       minZoom: 2,
-      maxZoom: 14,
+      maxZoom: 18,
       maxBounds: [[-35, -45], [65, 45]],
     });
 
-    // Add navigation control
-    map.current.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
+    // Add navigation control with compass
+    map.current.addControl(new mapboxgl.NavigationControl({ showCompass: true }), 'bottom-right');
 
     // Create reusable popup
     popup.current = new mapboxgl.Popup({
@@ -108,80 +98,9 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
       const m = map.current!;
       setMapLoaded(true);
 
-      // === WIND PARTICLE LAYER ===
-      m.addSource('raster-array-source', {
-        type: 'raster-array',
-        url: 'mapbox://rasterarrayexamples.gfs-winds',
-        tileSize: 512,
-      });
-
-      m.addLayer({
-        id: 'wind-layer',
-        type: 'raster-particle',
-        source: 'raster-array-source',
-        'source-layer': '10winds',
-        layout: {
-          visibility: 'none', // Hidden by default
-        },
-        paint: {
-          'raster-particle-speed-factor': 0.4,
-          'raster-particle-fade-opacity-factor': 0.9,
-          'raster-particle-reset-rate-factor': 0.4,
-          'raster-particle-count': 4000,
-          'raster-particle-max-speed': 40,
-          'raster-particle-color': [
-            'interpolate',
-            ['linear'],
-            ['raster-particle-speed'],
-            1.5, 'rgba(134,163,171,255)',
-            2.5, 'rgba(126,152,188,255)',
-            4.12, 'rgba(110,143,208,255)',
-            6.17, 'rgba(15,147,167,255)',
-            9.26, 'rgba(57,163,57,255)',
-            11.83, 'rgba(194,134,62,255)',
-            14.92, 'rgba(200,66,13,255)',
-            18.0, 'rgba(210,0,50,255)',
-            21.6, 'rgba(175,80,136,255)',
-            25.21, 'rgba(117,74,147,255)',
-            29.32, 'rgba(68,105,141,255)',
-            33.44, 'rgba(194,251,119,255)',
-            43.72, 'rgba(241,255,109,255)',
-            50.41, 'rgba(255,255,255,255)',
-            59.16, 'rgba(0,255,255,255)',
-            69.44, 'rgba(255,37,255,255)',
-          ],
-        },
-      });
-
-      // === CHOROPLETH: Country boundaries ===
-      m.addSource('africa-countries', {
-        type: 'vector',
-        url: 'mapbox://mapbox.country-boundaries-v1',
-      });
-
-      m.addLayer({
-        id: 'africa-fill',
-        type: 'fill',
-        source: 'africa-countries',
-        'source-layer': 'country_boundaries',
-        filter: ['in', 'iso_3166_1_alpha_3', ...AFRO_COUNTRIES.map(c => c.code)],
-        paint: {
-          'fill-color': '#374151',
-          'fill-opacity': 0.5,
-        },
-      });
-
-      m.addLayer({
-        id: 'africa-borders',
-        type: 'line',
-        source: 'africa-countries',
-        'source-layer': 'country_boundaries',
-        filter: ['in', 'iso_3166_1_alpha_3', ...AFRO_COUNTRIES.map(c => c.code)],
-        paint: {
-          'line-color': '#6b7280',
-          'line-width': 0.8,
-        },
-      });
+      // Set initial light preset
+      m.setConfigProperty('basemap', 'lightPreset', 'day');
+      m.setConfigProperty('basemap', 'show3dObjects', true);
 
       // === SIGNALS: GeoJSON source with clustering ===
       m.addSource('signals', {
@@ -191,22 +110,22 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
         clusterMaxZoom: 10,
         clusterRadius: 50,
         clusterProperties: {
-          // Track minimum priority in cluster (1=P1, 4=P4)
           minPriority: ['min', ['get', 'priorityNum']],
         },
       });
 
-      // Cluster circles layer
+      // Cluster circles layer - using 'top' slot for visibility above Standard layers
       m.addLayer({
         id: 'clusters',
         type: 'circle',
         source: 'signals',
         filter: ['has', 'point_count'],
+        slot: 'top',
         paint: {
           'circle-color': [
             'step',
             ['get', 'minPriority'],
-            PRIORITY_COLORS.P1, // minPriority <= 1
+            PRIORITY_COLORS.P1,
             1.5, PRIORITY_COLORS.P2,
             2.5, PRIORITY_COLORS.P3,
             3.5, PRIORITY_COLORS.P4,
@@ -214,14 +133,15 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
           'circle-radius': [
             'step',
             ['get', 'point_count'],
-            18,   // < 10 points
+            18,
             10, 24,
             50, 32,
             100, 40,
           ],
-          'circle-stroke-width': 2,
+          'circle-stroke-width': 3,
           'circle-stroke-color': '#ffffff',
-          'circle-opacity': 0.9,
+          'circle-opacity': 0.95,
+          'circle-emissive-strength': 0.8,
         },
       });
 
@@ -231,13 +151,15 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
         type: 'symbol',
         source: 'signals',
         filter: ['has', 'point_count'],
+        slot: 'top',
         layout: {
           'text-field': ['get', 'point_count_abbreviated'],
           'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
-          'text-size': 12,
+          'text-size': 13,
         },
         paint: {
           'text-color': '#ffffff',
+          'text-emissive-strength': 1,
         },
       });
 
@@ -247,6 +169,7 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
         type: 'circle',
         source: 'signals',
         filter: ['!', ['has', 'point_count']],
+        slot: 'top',
         paint: {
           'circle-color': [
             'match',
@@ -259,13 +182,35 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
           ],
           'circle-radius': [
             'interpolate', ['linear'], ['zoom'],
-            3, 6,
-            8, 10,
-            12, 14,
+            3, 8,
+            8, 12,
+            12, 16,
           ],
-          'circle-stroke-width': 2,
+          'circle-stroke-width': 3,
           'circle-stroke-color': '#ffffff',
           'circle-opacity': 0.95,
+          'circle-emissive-strength': 0.8,
+        },
+      });
+
+      // P1 pulse animation ring
+      m.addLayer({
+        id: 'p1-pulse',
+        type: 'circle',
+        source: 'signals',
+        filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'priority'], 'P1']],
+        slot: 'top',
+        paint: {
+          'circle-color': 'transparent',
+          'circle-radius': [
+            'interpolate', ['linear'], ['zoom'],
+            3, 16,
+            8, 24,
+            12, 32,
+          ],
+          'circle-stroke-width': 2,
+          'circle-stroke-color': PRIORITY_COLORS.P1,
+          'circle-stroke-opacity': 0.5,
         },
       });
 
@@ -306,7 +251,7 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
           .setLngLat(coords)
           .setHTML(`
             <div class="signal-popup-content">
-              <div class="popup-header" style="color: ${PRIORITY_COLORS[props.priority] || '#fff'}">
+              <div class="popup-header" style="color: ${PRIORITY_COLORS[props.priority] || '#3b82f6'}">
                 <strong>${props.priority}</strong> · ${props.disease}
               </div>
               <div class="popup-location">${props.country}${props.admin1 ? ', ' + props.admin1 : ''}</div>
@@ -328,22 +273,6 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
       m.on('mouseleave', 'clusters', () => {
         m.getCanvas().style.cursor = '';
       });
-
-      // Click on country choropleth
-      m.on('click', 'africa-fill', (e) => {
-        if (e.features?.[0]) {
-          const code = e.features[0].properties?.iso_3166_1_alpha_3;
-          const country = AFRO_COUNTRIES.find(c => c.code === code);
-          if (country && onCountrySelect) onCountrySelect(country.name);
-        }
-      });
-
-      m.on('mouseenter', 'africa-fill', () => {
-        m.getCanvas().style.cursor = 'pointer';
-      });
-      m.on('mouseleave', 'africa-fill', () => {
-        m.getCanvas().style.cursor = '';
-      });
     });
 
     return () => {
@@ -352,23 +281,6 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
       map.current = null;
     };
   }, [onCountrySelect, onSignalSelect, signals]);
-
-  // Update choropleth colors
-  useEffect(() => {
-    if (!map.current || !mapLoaded || !map.current.isStyleLoaded()) return;
-    const stats = countryStats();
-    const colorExpr: mapboxgl.Expression = ['match', ['get', 'iso_3166_1_alpha_3']];
-    Object.entries(stats).forEach(([code, data]) => {
-      colorExpr.push(code, getSeverityColor(data.count, data.hasP1));
-    });
-    colorExpr.push('#374151');
-    try {
-      map.current.setPaintProperty('africa-fill', 'fill-color', colorExpr);
-    } catch (e) {
-      // Style not ready yet, will retry on next render
-      console.debug('Map style not ready, skipping choropleth update');
-    }
-  }, [signals, mapLoaded, countryStats]);
 
   // Update GeoJSON source when signals change
   useEffect(() => {
@@ -383,7 +295,7 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
   useEffect(() => {
     if (!map.current || !mapLoaded || !map.current.isStyleLoaded()) return;
     const visibility = showMarkers ? 'visible' : 'none';
-    ['clusters', 'cluster-count', 'unclustered-point'].forEach(layer => {
+    ['clusters', 'cluster-count', 'unclustered-point', 'p1-pulse'].forEach(layer => {
       try {
         if (map.current?.getLayer(layer)) {
           map.current.setLayoutProperty(layer, 'visibility', visibility);
@@ -394,17 +306,15 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
     });
   }, [showMarkers, mapLoaded]);
 
-  // Toggle wind layer visibility
+  // Update light preset
   useEffect(() => {
     if (!map.current || !mapLoaded || !map.current.isStyleLoaded()) return;
     try {
-      if (map.current.getLayer('wind-layer')) {
-        map.current.setLayoutProperty('wind-layer', 'visibility', showWindLayer ? 'visible' : 'none');
-      }
+      map.current.setConfigProperty('basemap', 'lightPreset', lightPreset);
     } catch (e) {
-      // Ignore if style not ready
+      console.debug('Failed to set light preset');
     }
-  }, [showWindLayer, mapLoaded]);
+  }, [lightPreset, mapLoaded]);
 
   // Fly to selected signal
   useEffect(() => {
@@ -412,8 +322,9 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
     if (selectedSignal.location_lat && selectedSignal.location_lng) {
       map.current.flyTo({
         center: [selectedSignal.location_lng, selectedSignal.location_lat],
-        zoom: 8,
+        zoom: 10,
         duration: 1200,
+        pitch: 45,
       });
     } else if (selectedSignal.location_country_iso) {
       const country = AFRO_COUNTRIES.find(c => c.code === selectedSignal.location_country_iso);
@@ -430,7 +341,13 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
   // Controls
   const handleZoomIn = () => map.current?.zoomIn();
   const handleZoomOut = () => map.current?.zoomOut();
-  const handleReset = () => map.current?.flyTo({ center: [20, 0], zoom: 3, duration: 800 });
+  const handleReset = () => map.current?.flyTo({ center: [20, 0], zoom: 3, duration: 800, pitch: 0 });
+  
+  const cycleLightPreset = () => {
+    const currentIndex = LIGHT_PRESETS.indexOf(lightPreset);
+    const nextIndex = (currentIndex + 1) % LIGHT_PRESETS.length;
+    setLightPreset(LIGHT_PRESETS[nextIndex]);
+  };
 
   // Alert counts
   const alertCounts = signals.reduce((acc, s) => {
@@ -480,14 +397,16 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
           <TooltipTrigger asChild>
             <Button
               size="icon"
-              variant={showWindLayer ? 'default' : 'secondary'}
-              onClick={() => setShowWindLayer(!showWindLayer)}
+              variant="secondary"
+              onClick={cycleLightPreset}
               className="h-8 w-8 bg-card/90 backdrop-blur"
             >
-              <Wind className="h-4 w-4" />
+              {LIGHT_PRESET_ICONS[lightPreset]}
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="left">Toggle Wind Patterns</TooltipContent>
+          <TooltipContent side="left">
+            Light: {lightPreset.charAt(0).toUpperCase() + lightPreset.slice(1)}
+          </TooltipContent>
         </Tooltip>
       </div>
 
@@ -495,18 +414,17 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
       <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur rounded-lg p-3 z-20">
         <div className="text-xs font-semibold mb-2 flex items-center gap-1">
           <AlertTriangle className="h-3 w-3" />
-          Signal Density
+          Signal Priority
         </div>
         <div className="flex flex-col gap-1 text-xs">
           {[
-            { color: '#dc2626', label: 'Critical (P1)' },
-            { color: '#ea580c', label: 'High (10+)' },
-            { color: '#d97706', label: 'Medium (5-9)' },
-            { color: '#ca8a04', label: 'Low (2-4)' },
-            { color: '#65a30d', label: 'Minimal (1)' },
+            { color: PRIORITY_COLORS.P1, label: 'P1 · Critical' },
+            { color: PRIORITY_COLORS.P2, label: 'P2 · High' },
+            { color: PRIORITY_COLORS.P3, label: 'P3 · Medium' },
+            { color: PRIORITY_COLORS.P4, label: 'P4 · Low' },
           ].map(({ color, label }) => (
             <div key={label} className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
+              <div className="w-3 h-3 rounded-full border-2 border-white" style={{ backgroundColor: color }} />
               <span>{label}</span>
             </div>
           ))}
@@ -535,20 +453,20 @@ export function AfricaMap({ signals, selectedSignal, onSignalSelect, onCountrySe
         .mapboxgl-popup-content {
           background: hsl(var(--card));
           border: 1px solid hsl(var(--border));
-          border-radius: 8px;
+          border-radius: 12px;
           padding: 0;
-          box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+          box-shadow: 0 8px 32px rgba(0,0,0,0.15);
         }
         .mapboxgl-popup-tip {
           border-top-color: hsl(var(--card)) !important;
         }
         .signal-popup-content {
-          padding: 10px 12px;
-          min-width: 160px;
+          padding: 12px 14px;
+          min-width: 180px;
         }
         .popup-header {
           font-weight: 600;
-          font-size: 13px;
+          font-size: 14px;
           margin-bottom: 4px;
         }
         .popup-location {
