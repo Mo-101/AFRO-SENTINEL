@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Navigate } from 'react-router-dom';
-import { Header } from '@/components/layout/Header';
+import { Navigate, Link } from 'react-router-dom';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { DashboardAnalytics } from '@/components/dashboard/DashboardAnalytics';
 import { DashboardHero } from '@/components/dashboard/DashboardHero';
@@ -16,10 +15,22 @@ import { useSignals, Signal } from '@/hooks/useSignals';
 import { useRealtimeAlerts } from '@/hooks/useRealtimeAlerts';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { LayoutDashboard, Radio, Database, Map as MapIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
+import { LayoutDashboard, Radio, Database, Map as MapIcon, Bell, Moon, Sun, User, Settings, LogOut } from 'lucide-react';
 
 const Index = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, role, signOut, isAdmin, isAnalyst, loading: authLoading } = useAuth();
+  const [isDark, setIsDark] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState('AFRO Regional Panorama');
   const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -107,49 +118,128 @@ const Index = () => {
     return <Navigate to="/auth" replace />;
   }
 
+  const toggleTheme = () => {
+    setIsDark(!isDark);
+    document.documentElement.classList.toggle('dark');
+  };
+
+  const getInitials = (email: string) => {
+    return email.substring(0, 2).toUpperCase();
+  };
+
+  const getRoleBadgeColor = () => {
+    switch (role) {
+      case 'admin':
+        return 'bg-destructive text-destructive-foreground';
+      case 'analyst':
+        return 'bg-accent text-accent-foreground';
+      default:
+        return 'bg-secondary text-secondary-foreground';
+    }
+  };
+
   // Authenticated full dashboard with premium layout
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-background via-background to-primary/5 overflow-hidden">
-      <Header />
-      
       <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar */}
+        {/* Sidebar with role-aware footer */}
         <Sidebar
           selectedCountry={selectedCountry}
           onSelectCountry={setSelectedCountry}
+          user={user}
+          role={role}
+          isAdmin={isAdmin}
+          isAnalyst={isAnalyst}
+          onSignOut={signOut}
         />
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col overflow-hidden">
-          {/* Tabs Navigation - Neuromorphic Style */}
+          {/* Tabs Navigation with right-side icons */}
           <div className="border-b bg-card/30 px-6 py-3">
-            <div className="flex gap-2">
-              {[
-                { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-                { id: 'signals', icon: Radio, label: 'Signals' },
-                { id: 'sources', icon: Database, label: 'Sources' },
-                { id: 'map', icon: MapIcon, label: 'Map' },
-              ].map(({ id, icon: Icon, label }) => (
-                <button
-                  key={id}
-                  onClick={() => setActiveTab(id)}
-                  className={`
-                    flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
-                    ${activeTab === id 
-                      ? 'neuro-card text-primary' 
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
-                    }
-                  `}
-                >
-                  <div className={`
-                    w-8 h-8 rounded-lg flex items-center justify-center transition-all
-                    ${activeTab === id ? 'shadow-inset bg-primary/10' : 'bg-background/50'}
-                  `}>
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <span>{label}</span>
-                </button>
-              ))}
+            <div className="flex items-center justify-between">
+              {/* Left: Tabs */}
+              <div className="flex gap-2">
+                {[
+                  { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+                  { id: 'signals', icon: Radio, label: 'Signals' },
+                  { id: 'sources', icon: Database, label: 'Sources' },
+                  { id: 'map', icon: MapIcon, label: 'Map' },
+                ].map(({ id, icon: Icon, label }) => (
+                  <button
+                    key={id}
+                    onClick={() => setActiveTab(id)}
+                    className={`
+                      flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                      ${activeTab === id 
+                        ? 'neuro-card text-primary' 
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                      }
+                    `}
+                  >
+                    <div className={`
+                      w-8 h-8 rounded-lg flex items-center justify-center transition-all
+                      ${activeTab === id ? 'shadow-inset bg-primary/10' : 'bg-background/50'}
+                    `}>
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Right: Icons (Alert, Theme, Account) */}
+              <div className="flex items-center gap-2">
+                {/* Notifications */}
+                <Button variant="ghost" size="icon" className="relative rounded-xl hover:bg-muted/50">
+                  <Bell className="h-5 w-5 text-muted-foreground" />
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-sky-500 rounded-full animate-pulse" />
+                </Button>
+
+                {/* Theme toggle */}
+                <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-xl hover:bg-muted/50">
+                  {isDark ? <Sun className="h-5 w-5 text-muted-foreground" /> : <Moon className="h-5 w-5 text-muted-foreground" />}
+                </Button>
+
+                {/* User menu */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                      <Avatar className="h-9 w-9">
+                        <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
+                          {getInitials(user?.email || 'U')}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{user?.email}</p>
+                        <div className="flex items-center gap-2 pt-1">
+                          <Badge className={getRoleBadgeColor()} variant="secondary">
+                            {role || 'viewer'}
+                          </Badge>
+                        </div>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Settings className="mr-2 h-4 w-4" />
+                      Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={signOut} className="text-destructive">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </div>
 
