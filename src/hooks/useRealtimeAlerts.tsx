@@ -133,9 +133,26 @@ export function useRealtimeAlerts(options: UseRealtimeAlertsOptions = {}) {
     };
   }, [enabled, maxAlerts, mapSignalToDetection, scheduleAutoDismiss]);
 
+  // Test function to inject a fake alert for UI testing
+  const injectTestAlert = useCallback(() => {
+    const testDetection: AutoDetection = {
+      id: `test-${Date.now()}`,
+      type: Math.random() > 0.5 ? 'ANOMALY_DETECTED' : 'VIRAL_SURGE',
+      severity: Math.random() > 0.5 ? 'CRITICAL' : 'HIGH',
+      title: 'Ebola-like hemorrhagic fever cluster',
+      description: 'Multiple patients presenting with bleeding symptoms at Kano General Hospital. 3 deaths reported in past 48 hours.',
+      location: 'Kano State, Nigeria',
+      metric: '12 suspected cases',
+    };
+    
+    setAlerts(prev => [testDetection, ...prev].slice(0, maxAlerts));
+    scheduleAutoDismiss(testDetection.id);
+  }, [maxAlerts, scheduleAutoDismiss]);
+
   return {
     alerts,
     dismissAlert,
     clearAllAlerts,
+    injectTestAlert,
   };
 }
