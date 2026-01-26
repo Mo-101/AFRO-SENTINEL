@@ -1,13 +1,24 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Signal } from '@/hooks/useSignals';
 
 const MAX_FEED_SIZE = 50;
+const NEW_SIGNAL_ANIMATION_DURATION = 2500; // ms
 
 export function useLiveSignalFeed() {
   const [liveSignals, setLiveSignals] = useState<Signal[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [newSignalIds, setNewSignalIds] = useState<Set<string>>(new Set());
+
+  // Calculate stream rate (signals per minute over last 5 min)
+  const streamRate = useMemo(() => {
+    const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+    const recentCount = liveSignals.filter(
+      s => new Date(s.created_at).getTime() > fiveMinAgo
+    ).length;
+    return Math.round(recentCount / 5);
+  }, [liveSignals]);
 
   // Fetch initial signals
   const fetchRecentSignals = useCallback(async () => {
@@ -38,7 +49,21 @@ export function useLiveSignalFeed() {
         { event: 'INSERT', schema: 'public', table: 'signals' },
         (payload) => {
           const newSignal = payload.new as Signal;
+          
+          // Mark as new for animation
+          setNewSignalIds(prev => new Set([...prev, newSignal.id]));
+          
+          // Add to feed
           setLiveSignals(prev => [newSignal, ...prev].slice(0, MAX_FEED_SIZE));
+          
+          // Remove "new" flag after animation completes
+          setTimeout(() => {
+            setNewSignalIds(prev => {
+              const next = new Set(prev);
+              next.delete(newSignal.id);
+              return next;
+            });
+          }, NEW_SIGNAL_ANIMATION_DURATION);
         }
       )
       .on(
@@ -60,5 +85,12 @@ export function useLiveSignalFeed() {
     };
   }, [fetchRecentSignals]);
 
-  return { liveSignals, isConnected, isLoading, refetch: fetchRecentSignals };
+  return { 
+    liveSignals, 
+    isConnected, 
+    isLoading, 
+    newSignalIds,
+    streamRate,
+    refetch: fetchRecentSignals 
+  };
 }

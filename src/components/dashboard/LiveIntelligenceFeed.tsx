@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { useLiveSignalFeed } from '@/hooks/useLiveSignalFeed';
 import { useSignalStats } from '@/hooks/useSignals';
 import { Signal } from '@/hooks/useSignals';
@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Radio } from 'lucide-react';
 
 interface LiveIntelligenceFeedProps {
   onSignalClick?: (signal: Signal) => void;
@@ -23,31 +24,37 @@ interface FeedItemProps {
   signal: Signal;
   onClick?: () => void;
   isNew?: boolean;
+  ageIndex: number;
 }
 
-function FeedItem({ signal, onClick, isNew }: FeedItemProps) {
+function FeedItem({ signal, onClick, isNew, ageIndex }: FeedItemProps) {
   const priorityStyle = PRIORITY_STYLES[signal.priority] || PRIORITY_STYLES.P4;
   const timeAgo = formatDistanceToNow(new Date(signal.created_at), { addSuffix: false });
+  
+  // Calculate fade opacity based on age (older = more faded)
+  const fadeOpacity = Math.max(0.45, 1 - (ageIndex * 0.012));
 
   return (
     <button
       onClick={onClick}
+      style={{ opacity: fadeOpacity }}
       className={cn(
-        "w-full text-left p-3 border-b border-border/50 transition-all duration-200",
-        "hover:bg-muted/50 focus:outline-none focus:bg-muted/50",
-        isNew && "animate-pulse bg-primary/5"
+        "w-full text-left p-3 border-b border-border/50 transition-all duration-300",
+        "hover:bg-muted/50 hover:opacity-100 focus:outline-none focus:bg-muted/50",
+        isNew && "feed-item-enter bg-primary/5",
+        signal.priority === 'P1' && isNew && "feed-item-glow-p1"
       )}
     >
       <div className="flex items-start gap-3">
         {/* Priority indicator */}
         <div className={cn(
-          "w-2 h-2 rounded-full mt-1.5 shrink-0",
+          "w-2 h-2 rounded-full mt-1.5 shrink-0 transition-all",
           priorityStyle.dot,
-          signal.priority === 'P1' && "animate-pulse"
+          signal.priority === 'P1' && "animate-pulse shadow-[0_0_8px_hsl(var(--destructive)/0.6)]"
         )} />
 
         <div className="flex-1 min-w-0">
-          {/* Disease + Country */}
+          {/* Disease + Priority Badge */}
           <div className="flex items-center gap-2 mb-1">
             <span className="font-semibold text-sm text-foreground truncate">
               {signal.disease_name || 'Unknown'}
@@ -97,9 +104,10 @@ function FeedItemSkeleton() {
 }
 
 export function LiveIntelligenceFeed({ onSignalClick }: LiveIntelligenceFeedProps) {
-  const { liveSignals, isConnected, isLoading } = useLiveSignalFeed();
+  const { liveSignals, isConnected, isLoading, newSignalIds, streamRate } = useLiveSignalFeed();
   const { data: stats } = useSignalStats();
   const [isPaused, setIsPaused] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   // Calculate compact stats
   const p1Count = stats?.byPriority?.P1 || 0;
@@ -108,13 +116,20 @@ export function LiveIntelligenceFeed({ onSignalClick }: LiveIntelligenceFeedProp
   const total = stats?.total || 0;
   const triageRate = total > 0 ? Math.round((triaged / total) * 100) : 0;
 
-  // Ensure feed is never empty - show loading or data
+  // Ensure feed is never empty
   const displaySignals = useMemo(() => {
     if (liveSignals.length === 0 && !isLoading) {
-      return []; // Will show "No signals" message
+      return [];
     }
     return liveSignals;
   }, [liveSignals, isLoading]);
+
+  // Auto-scroll to top when new signals arrive (if not paused)
+  useEffect(() => {
+    if (!isPaused && newSignalIds.size > 0 && scrollRef.current) {
+      scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [newSignalIds.size, isPaused]);
 
   return (
     <div 
@@ -122,12 +137,15 @@ export function LiveIntelligenceFeed({ onSignalClick }: LiveIntelligenceFeedProp
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Header with connection status */}
+      {/* Header with connection status and stream rate */}
       <div className="p-4 border-b border-border/50">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-foreground">
-            Live Feed
-          </h3>
+          <div className="flex items-center gap-2">
+            <Radio className="w-3.5 h-3.5 text-savanna" />
+            <h3 className="text-xs font-bold uppercase tracking-widest text-foreground">
+              Live Feed
+            </h3>
+          </div>
           <div className="flex items-center gap-1.5">
             {isPaused && (
               <span className="text-[9px] text-muted-foreground uppercase">Paused</span>
@@ -139,12 +157,15 @@ export function LiveIntelligenceFeed({ onSignalClick }: LiveIntelligenceFeedProp
           </div>
         </div>
         <p className="text-[10px] text-muted-foreground mt-1">
-          {isConnected ? 'Connected • Real-time updates' : 'Connecting...'}
+          {isConnected 
+            ? `Streaming • ${streamRate > 0 ? `${streamRate}/min` : 'Waiting for signals'}` 
+            : 'Connecting...'
+          }
         </p>
       </div>
 
       {/* Scrollable signal list */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1" ref={scrollRef}>
         {isLoading ? (
           <>
             {[...Array(8)].map((_, i) => (
@@ -157,7 +178,8 @@ export function LiveIntelligenceFeed({ onSignalClick }: LiveIntelligenceFeedProp
               key={signal.id}
               signal={signal}
               onClick={() => onSignalClick?.(signal)}
-              isNew={index === 0}
+              isNew={newSignalIds.has(signal.id)}
+              ageIndex={index}
             />
           ))
         ) : (
@@ -170,14 +192,17 @@ export function LiveIntelligenceFeed({ onSignalClick }: LiveIntelligenceFeedProp
         )}
       </ScrollArea>
 
-      {/* Compact stats footer */}
+      {/* Compact stats footer with stream indicator */}
       <div className="p-3 border-t border-border/50 bg-muted/20">
         <div className="flex items-center justify-between text-[10px] font-medium">
           <span className="text-destructive">P1: {p1Count}</span>
           <span className="text-muted-foreground">•</span>
           <span className="text-sunset">NEW: {newCount}</span>
           <span className="text-muted-foreground">•</span>
-          <span className="text-savanna">TRIAGE: {triageRate}%</span>
+          <span className="text-savanna flex items-center gap-1">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-savanna animate-pulse" />
+            {streamRate}/min
+          </span>
         </div>
       </div>
     </div>
