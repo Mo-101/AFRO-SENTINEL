@@ -11,153 +11,155 @@
 
 @layer base {
   :root {
-    /* Core colors - Clean Professional Foundation */
-    --background: 40 20% 98%;
-    --foreground: 220 30% 15%;
+    /* Soft White/Blue Neuromorphic Theme */
+    --background: 220 30% 97%;
+    --foreground: 220 25% 20%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 30% 15%;
+    --card: 220 25% 99%;
+    --card-foreground: 220 25% 20%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 30% 15%;
+    --popover: 220 25% 99%;
+    --popover-foreground: 220 25% 20%;
 
-    /* Primary - Deep Indigo (Trust, Authority) */
-    --primary: 215 50% 23%;
-    --primary-foreground: 40 20% 98%;
+    /* Primary - Soft Blue (Trust, Calm) */
+    --primary: 220 70% 50%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Warm Neutral */
-    --secondary: 40 15% 94%;
-    --secondary-foreground: 220 30% 15%;
+    /* Secondary - Soft Gray-Blue */
+    --secondary: 220 20% 94%;
+    --secondary-foreground: 220 25% 20%;
 
-    /* Muted - Subtle Background */
-    --muted: 40 10% 92%;
-    --muted-foreground: 220 15% 45%;
+    /* Muted - Very Soft Blue-Gray */
+    --muted: 220 20% 92%;
+    --muted-foreground: 220 15% 50%;
 
-    /* Accent - Savanna Green (Health, Growth) */
-    --accent: 95 40% 35%;
-    --accent-foreground: 40 20% 98%;
+    /* Accent - Soft Indigo */
+    --accent: 230 60% 60%;
+    --accent-foreground: 0 0% 100%;
 
-    /* African-Inspired Accent Colors */
-    --sunset: 25 75% 55%;
-    --sunset-foreground: 40 20% 98%;
+    /* African-Inspired Accent Colors (softened) */
+    --sunset: 25 70% 60%;
+    --sunset-foreground: 0 0% 100%;
     
-    --sahara: 42 70% 48%;
-    --sahara-foreground: 220 30% 15%;
+    --sahara: 42 65% 55%;
+    --sahara-foreground: 220 25% 20%;
     
-    --savanna: 95 40% 35%;
-    --savanna-foreground: 40 20% 98%;
+    --savanna: 150 45% 45%;
+    --savanna-foreground: 0 0% 100%;
     
-    --terracotta: 15 60% 50%;
-    --terracotta-foreground: 40 20% 98%;
+    --terracotta: 15 55% 55%;
+    --terracotta-foreground: 0 0% 100%;
 
     /* Priority Colors */
-    --priority-p1: 0 85% 55%;
+    --priority-p1: 0 75% 55%;
     --priority-p1-foreground: 0 0% 100%;
     
-    --priority-p2: 25 90% 55%;
+    --priority-p2: 25 80% 55%;
     --priority-p2-foreground: 0 0% 100%;
     
-    --priority-p3: 45 90% 50%;
-    --priority-p3-foreground: 220 30% 15%;
+    --priority-p3: 45 80% 50%;
+    --priority-p3-foreground: 220 25% 20%;
     
-    --priority-p4: 140 50% 45%;
+    --priority-p4: 150 50% 45%;
     --priority-p4-foreground: 0 0% 100%;
 
     /* Source Tier Colors */
-    --tier-1: 215 60% 45%;
-    --tier-2: 280 45% 50%;
-    --tier-3: 340 50% 55%;
+    --tier-1: 220 65% 55%;
+    --tier-2: 260 50% 55%;
+    --tier-3: 320 45% 55%;
 
     /* Destructive */
-    --destructive: 0 84% 60%;
+    --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
 
     /* UI Elements */
-    --border: 40 15% 88%;
-    --input: 40 15% 88%;
+    --border: 220 20% 90%;
+    --input: 220 20% 90%;
     
-    /* Premium shadows and effects */
-    --shadow-soft: 0 4px 20px -4px hsl(220 30% 15% / 0.08);
-    --shadow-premium: 0 8px 30px -8px hsl(220 30% 15% / 0.12), 0 4px 10px -4px hsl(220 30% 15% / 0.06);
-    --ring: 215 50% 23%;
-    --radius: 0.625rem;
+    /* Neuromorphic shadows */
+    --shadow-soft: 8px 8px 20px hsl(220 30% 85% / 0.6), -8px -8px 20px hsl(0 0% 100% / 0.8);
+    --shadow-premium: 12px 12px 30px hsl(220 30% 85% / 0.5), -12px -12px 30px hsl(0 0% 100% / 0.9);
+    --shadow-inset: inset 4px 4px 10px hsl(220 30% 85% / 0.5), inset -4px -4px 10px hsl(0 0% 100% / 0.8);
+    --ring: 220 70% 50%;
+    --radius: 1rem;
 
     /* Sidebar */
-    --sidebar-background: 40 20% 97%;
-    --sidebar-foreground: 220 30% 25%;
-    --sidebar-primary: 215 50% 23%;
-    --sidebar-primary-foreground: 40 20% 98%;
-    --sidebar-accent: 40 15% 92%;
-    --sidebar-accent-foreground: 220 30% 15%;
-    --sidebar-border: 40 15% 85%;
-    --sidebar-ring: 215 50% 45%;
+    --sidebar-background: 220 25% 98%;
+    --sidebar-foreground: 220 25% 30%;
+    --sidebar-primary: 220 70% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 20% 94%;
+    --sidebar-accent-foreground: 220 25% 20%;
+    --sidebar-border: 220 20% 90%;
+    --sidebar-ring: 220 70% 55%;
 
     /* Chart Colors */
-    --chart-1: 215 50% 45%;
-    --chart-2: 95 40% 45%;
-    --chart-3: 25 75% 55%;
-    --chart-4: 42 70% 48%;
-    --chart-5: 340 50% 55%;
+    --chart-1: 220 70% 55%;
+    --chart-2: 150 45% 50%;
+    --chart-3: 25 70% 60%;
+    --chart-4: 42 65% 55%;
+    --chart-5: 320 45% 55%;
   }
 
   .dark {
-    --background: 220 35% 8%;
-    --foreground: 40 20% 95%;
+    --background: 225 30% 10%;
+    --foreground: 220 20% 95%;
 
-    --card: 220 30% 12%;
-    --card-foreground: 40 20% 95%;
+    --card: 225 28% 14%;
+    --card-foreground: 220 20% 95%;
 
-    --popover: 220 30% 10%;
-    --popover-foreground: 40 20% 95%;
+    --popover: 225 28% 12%;
+    --popover-foreground: 220 20% 95%;
 
-    --primary: 40 20% 95%;
-    --primary-foreground: 220 35% 8%;
+    --primary: 220 70% 60%;
+    --primary-foreground: 225 30% 10%;
 
-    --secondary: 220 25% 18%;
-    --secondary-foreground: 40 20% 95%;
+    --secondary: 225 25% 20%;
+    --secondary-foreground: 220 20% 95%;
 
-    --muted: 220 25% 18%;
-    --muted-foreground: 40 10% 65%;
+    --muted: 225 25% 18%;
+    --muted-foreground: 220 15% 60%;
 
-    --accent: 95 35% 40%;
-    --accent-foreground: 40 20% 98%;
+    --accent: 230 55% 55%;
+    --accent-foreground: 0 0% 100%;
 
     /* African-Inspired (adjusted for dark mode) */
-    --sunset: 25 80% 60%;
-    --sahara: 42 75% 55%;
-    --savanna: 95 45% 45%;
-    --terracotta: 15 65% 55%;
+    --sunset: 25 75% 60%;
+    --sahara: 42 70% 55%;
+    --savanna: 150 45% 50%;
+    --terracotta: 15 60% 55%;
 
     /* Priority Colors (brighter for dark mode) */
-    --priority-p1: 0 80% 60%;
-    --priority-p2: 25 85% 60%;
-    --priority-p3: 45 85% 55%;
-    --priority-p4: 140 45% 50%;
+    --priority-p1: 0 75% 60%;
+    --priority-p2: 25 80% 60%;
+    --priority-p3: 45 80% 55%;
+    --priority-p4: 150 45% 50%;
 
     /* Tier Colors */
-    --tier-1: 215 65% 55%;
-    --tier-2: 280 50% 60%;
-    --tier-3: 340 55% 60%;
+    --tier-1: 220 65% 60%;
+    --tier-2: 260 55% 60%;
+    --tier-3: 320 50% 60%;
 
-    --destructive: 0 75% 50%;
+    --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 25% 20%;
-    --input: 220 25% 20%;
-    --ring: 40 20% 80%;
+    --border: 225 25% 22%;
+    --input: 225 25% 22%;
+    --ring: 220 70% 60%;
     
-    /* Premium shadows for dark mode */
-    --shadow-soft: 0 4px 20px -4px hsl(0 0% 0% / 0.3);
-    --shadow-premium: 0 8px 30px -8px hsl(0 0% 0% / 0.4), 0 4px 10px -4px hsl(0 0% 0% / 0.2);
+    /* Neuromorphic shadows for dark mode */
+    --shadow-soft: 8px 8px 20px hsl(225 30% 5% / 0.5), -8px -8px 20px hsl(225 25% 20% / 0.2);
+    --shadow-premium: 12px 12px 30px hsl(225 30% 5% / 0.6), -12px -12px 30px hsl(225 25% 22% / 0.15);
+    --shadow-inset: inset 4px 4px 10px hsl(225 30% 5% / 0.4), inset -4px -4px 10px hsl(225 25% 20% / 0.15);
 
-    --sidebar-background: 220 35% 6%;
-    --sidebar-foreground: 40 15% 85%;
-    --sidebar-primary: 215 55% 55%;
-    --sidebar-primary-foreground: 220 35% 8%;
-    --sidebar-accent: 220 25% 15%;
-    --sidebar-accent-foreground: 40 20% 95%;
-    --sidebar-border: 220 25% 18%;
-    --sidebar-ring: 215 55% 55%;
+    --sidebar-background: 225 30% 8%;
+    --sidebar-foreground: 220 15% 85%;
+    --sidebar-primary: 220 70% 60%;
+    --sidebar-primary-foreground: 225 30% 10%;
+    --sidebar-accent: 225 25% 16%;
+    --sidebar-accent-foreground: 220 20% 95%;
+    --sidebar-border: 225 25% 20%;
+    --sidebar-ring: 220 70% 60%;
   }
 }
 
@@ -255,13 +257,32 @@
     @apply w-full h-full min-h-[400px] rounded-lg overflow-hidden;
   }
 
-  /* Premium Shadow Classes */
+  /* Neuromorphic Shadow Classes */
   .shadow-soft {
     box-shadow: var(--shadow-soft);
   }
 
   .shadow-premium {
     box-shadow: var(--shadow-premium);
+  }
+
+  .shadow-inset {
+    box-shadow: var(--shadow-inset);
+  }
+
+  /* Neuromorphic Card */
+  .neuro-card {
+    @apply rounded-2xl bg-card;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .neuro-card:hover {
+    box-shadow: var(--shadow-premium);
+  }
+
+  /* Soft pressed state */
+  .neuro-pressed {
+    box-shadow: var(--shadow-inset);
   }
 }
 

@@ -22,17 +22,16 @@ export function DashboardHero() {
   const displayName = getUserDisplayName(user?.email);
 
   return (
-    <Card className="relative overflow-hidden bg-gradient-to-br from-card via-card to-primary/5 border-0 shadow-premium">
-      {/* Subtle gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-sunset/5" />
+    <Card className="relative overflow-hidden neuro-card border-0">
+      {/* Soft gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
       
       {/* Content */}
       <div className="relative p-8 flex items-center justify-between">
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             <Badge 
-              variant="secondary" 
-              className="bg-savanna/10 text-savanna border-savanna/20 font-semibold text-xs uppercase tracking-wider"
+              className="bg-primary/10 text-primary border-primary/20 font-semibold text-xs uppercase tracking-wider shadow-sm"
             >
               <Zap className="w-3 h-3 mr-1" />
               Live Monitoring
@@ -40,7 +39,7 @@ export function DashboardHero() {
             {role && (
               <Badge 
                 variant="outline" 
-                className="font-medium text-xs capitalize"
+                className="font-medium text-xs capitalize border-border/50"
               >
                 {role}
               </Badge>
@@ -48,7 +47,7 @@ export function DashboardHero() {
           </div>
           
           <h1 className="text-3xl font-bold text-foreground tracking-tight">
-            {greeting}, <span className="text-gradient-african">{displayName}</span>
+            {greeting}, <span className="text-primary">{displayName}</span>
           </h1>
           
           <p className="text-muted-foreground max-w-md">
@@ -56,19 +55,18 @@ export function DashboardHero() {
           </p>
         </div>
 
-        {/* Illustration/Icon */}
+        {/* Illustration/Icon - Neuromorphic circle */}
         <div className="hidden md:flex items-center justify-center">
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-sunset/20 to-savanna/20 rounded-full blur-2xl" />
-            <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-primary/10 to-savanna/10 flex items-center justify-center border border-border/50">
+            <div className="w-28 h-28 rounded-full neuro-card flex items-center justify-center">
               <Shield className="w-12 h-12 text-primary" />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Bottom accent line */}
-      <div className="h-1 bg-gradient-to-r from-sunset via-sahara to-savanna" />
+      {/* Bottom accent line - softer gradient */}
+      <div className="h-1 bg-gradient-to-r from-primary/60 via-accent/50 to-savanna/40" />
     </Card>
   );
 }
