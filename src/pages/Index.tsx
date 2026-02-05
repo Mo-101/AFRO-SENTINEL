@@ -4,7 +4,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { ExecutiveCards } from '@/components/dashboard/ExecutiveCards';
 import { IntelligenceInsights } from '@/components/dashboard/IntelligenceInsights';
 import { LiveIntelligenceFeed } from '@/components/dashboard/LiveIntelligenceFeed';
- import { AutoTriagePanel } from '@/components/dashboard/AutoTriagePanel';
+import { AutoTriagePanel } from '@/components/dashboard/AutoTriagePanel';
 import { SignalModal } from '@/components/signals/SignalModal';
 import { AfricaMap } from '@/components/map/AfricaMap';
 import { AutoDetectionPopup } from '@/components/alerts/AutoDetectionPopup';
@@ -24,21 +24,33 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Moon, Sun, User, Settings, LogOut } from 'lucide-react';
+import { Bell, Moon, Sun, User, Settings, LogOut, Filter, X } from 'lucide-react';
 
 const Index = () => {
   const { user, role, signOut, isAdmin, isAnalyst, loading: authLoading } = useAuth();
   const [isDark, setIsDark] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState('AFRO Regional Panorama');
   const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null);
-  
+  const [activeFilter, setActiveFilter] = useState<string>('all');
+
   // Real-time P1/P2 alert system
   const { alerts, dismissAlert, injectTestAlert } = useRealtimeAlerts({ enabled: !!user, playSound: true });
 
-  // Fetch signals
+  // Fetch signals with active filter
   const signalFilters = useMemo(() => {
-    return { limit: 100 };
-  }, []);
+    const filters: { limit: number; priority?: string[]; status?: string[] } = { limit: 100 };
+
+    if (activeFilter === 'P1') {
+      filters.priority = ['P1'];
+    } else if (activeFilter === 'validated') {
+      filters.status = ['validated'];
+    } else if (activeFilter === 'new') {
+      filters.status = ['new'];
+    }
+    // 'all' = no additional filters
+
+    return filters;
+  }, [activeFilter]);
 
   const { data: signals, isLoading: signalsLoading } = useSignals(signalFilters);
 
@@ -46,7 +58,7 @@ const Index = () => {
   const filteredSignals = useMemo(() => {
     if (!signals) return [];
     if (selectedCountry === 'AFRO Regional Panorama') return signals;
-    return signals.filter(s => 
+    return signals.filter(s =>
       s.location_country.toLowerCase().includes(selectedCountry.toLowerCase())
     );
   }, [signals, selectedCountry]);
@@ -115,9 +127,9 @@ const Index = () => {
           <div className="border-b bg-card/30 px-4 py-2">
             <div className="flex items-center justify-end gap-2">
               {/* Test Alert Button (development) */}
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={injectTestAlert}
                 className="text-[10px] text-muted-foreground hover:text-foreground h-7 px-2"
               >
@@ -182,7 +194,39 @@ const Index = () => {
             <ScrollArea className="flex-1">
               <div className="p-4 space-y-4">
                 {/* A. Executive Cards - Top */}
-                <ExecutiveCards />
+                <ExecutiveCards
+                  activeFilter={activeFilter}
+                  onFilterChange={setActiveFilter}
+                />
+
+                {/* Active Filter Indicator Banner */}
+                {activeFilter !== 'all' && (
+                  <div className="flex items-center justify-between px-4 py-2 bg-primary/5 border border-primary/20 rounded-lg animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="flex items-center gap-2">
+                      <Filter className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-medium">
+                        Filter Active:{' '}
+                        <span className="font-bold text-primary">
+                          {activeFilter === 'P1' && 'Critical (P1) Threats'}
+                          {activeFilter === 'validated' && 'Guru-Validated Signals'}
+                          {activeFilter === 'new' && 'Awaiting Triage'}
+                        </span>
+                      </span>
+                      <Badge variant="secondary" className="text-xs">
+                        {filteredSignals.length} signals
+                      </Badge>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setActiveFilter('all')}
+                      className="h-7 px-2 text-xs gap-1"
+                    >
+                      <X className="w-3 h-3" />
+                      Clear
+                    </Button>
+                  </div>
+                )}
 
                 {/* B. Map - Primary Visual Anchor */}
                 <div className="h-[50vh] min-h-[400px] rounded-2xl overflow-hidden">
@@ -200,16 +244,19 @@ const Index = () => {
 
                 {/* C. Intelligence Insights - Bottom */}
                 <IntelligenceInsights signals={filteredSignals} />
-               
-               {/* D. AI Triage Control Panel - Visible to analysts/admins */}
-               {(isAdmin || isAnalyst) && (
-                 <AutoTriagePanel />
-               )}
+
+                {/* D. AI Triage Control Panel - Visible to analysts/admins */}
+                {(isAdmin || isAnalyst) && (
+                  <AutoTriagePanel />
+                )}
               </div>
             </ScrollArea>
 
             {/* Right Sidebar - Live Intelligence Feed (Always Visible) */}
-            <LiveIntelligenceFeed onSignalClick={setSelectedSignal} />
+            <LiveIntelligenceFeed
+              onSignalClick={setSelectedSignal}
+              activeFilter={activeFilter}
+            />
           </div>
         </main>
       </div>

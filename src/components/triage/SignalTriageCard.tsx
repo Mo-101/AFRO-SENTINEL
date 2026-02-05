@@ -43,7 +43,7 @@ export function SignalTriageCard({ signal, onStatusChange }: SignalTriageCardPro
     }
 
     try {
-      const updates: Record<string, any> = {
+      const updates: Record<string, string | undefined> = {
         status: newStatus,
         analyst_notes: notes,
       };

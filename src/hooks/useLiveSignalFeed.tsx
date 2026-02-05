@@ -49,13 +49,13 @@ export function useLiveSignalFeed() {
         { event: 'INSERT', schema: 'public', table: 'signals' },
         (payload) => {
           const newSignal = payload.new as Signal;
-          
+
           // Mark as new for animation
           setNewSignalIds(prev => new Set([...prev, newSignal.id]));
-          
+
           // Add to feed
           setLiveSignals(prev => [newSignal, ...prev].slice(0, MAX_FEED_SIZE));
-          
+
           // Remove "new" flag after animation completes
           setTimeout(() => {
             setNewSignalIds(prev => {
@@ -76,6 +76,14 @@ export function useLiveSignalFeed() {
           );
         }
       )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'signals' },
+        (payload) => {
+          const deletedId = payload.old.id;
+          setLiveSignals(prev => prev.filter(s => s.id !== deletedId));
+        }
+      )
       .subscribe((status) => {
         setIsConnected(status === 'SUBSCRIBED');
       });
@@ -85,12 +93,12 @@ export function useLiveSignalFeed() {
     };
   }, [fetchRecentSignals]);
 
-  return { 
-    liveSignals, 
-    isConnected, 
-    isLoading, 
+  return {
+    liveSignals,
+    isConnected,
+    isLoading,
     newSignalIds,
     streamRate,
-    refetch: fetchRecentSignals 
+    refetch: fetchRecentSignals
   };
 }

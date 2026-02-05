@@ -82,8 +82,9 @@ export function useRealtimeAlerts(options: UseRealtimeAlertsOptions = {}) {
 
   // Cleanup timers on unmount
   useEffect(() => {
+    const timers = dismissTimers.current;
     return () => {
-      dismissTimers.current.forEach(timer => clearTimeout(timer));
+      timers.forEach(timer => clearTimeout(timer));
     };
   }, []);
 

@@ -86,7 +86,7 @@ export function ModuleContent({ module, onComplete, onBack }: ModuleContentProps
           </div>
         );
       
-      case 'callout':
+      case 'callout': {
         const variantConfig = {
           info: { icon: Info, class: 'border-accent bg-accent/10' },
           warning: { icon: AlertTriangle, class: 'border-sahara bg-sahara/10' },
@@ -102,6 +102,7 @@ export function ModuleContent({ module, onComplete, onBack }: ModuleContentProps
             <AlertDescription>{content.content as string}</AlertDescription>
           </Alert>
         );
+      }
       
       case 'example':
         return (

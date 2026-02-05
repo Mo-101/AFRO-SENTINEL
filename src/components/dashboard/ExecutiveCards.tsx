@@ -1,4 +1,4 @@
- import { useSignalStats, useSignalTrends } from '@/hooks/useSignals';
+import { useSignalStats, useSignalTrends } from '@/hooks/useSignals';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Radio, AlertTriangle, ShieldCheck, Clock, TrendingUp, TrendingDown } from 'lucide-react';
@@ -12,20 +12,24 @@ interface ExecutiveCardProps {
   highlight?: 'default' | 'destructive' | 'success' | 'warning';
   pulse?: boolean;
   isLoading?: boolean;
+  onClick?: () => void;
+  isActive?: boolean;
 }
 
-function ExecutiveCard({ 
-  label, 
-  value, 
-  icon, 
-  trend, 
+function ExecutiveCard({
+  label,
+  value,
+  icon,
+  trend,
   highlight = 'default',
   pulse = false,
-  isLoading 
+  isLoading,
+  onClick,
+  isActive = false
 }: ExecutiveCardProps) {
   if (isLoading) {
     return (
-      <Card className="border-0 neuro-card">
+      <Card className="border-border/40 bg-card/50 backdrop-blur-sm overflow-hidden relative">
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="space-y-2">
@@ -53,52 +57,124 @@ function ExecutiveCard({
     warning: 'bg-sunset/10',
   };
 
+  const activeBorderColors = {
+    default: 'border-primary',
+    destructive: 'border-destructive',
+    success: 'border-savanna',
+    warning: 'border-sunset',
+  };
+
+  const activeGlowColors = {
+    default: 'shadow-primary/30',
+    destructive: 'shadow-destructive/30',
+    success: 'shadow-savanna/30',
+    warning: 'shadow-sunset/30',
+  };
+
   return (
-    <Card className={cn(
-      "border-0 neuro-card transition-all duration-300 hover:scale-[1.02]",
-      pulse && "animate-pulse"
-    )}>
-      <CardContent className="p-4">
+    <Card
+      onClick={onClick}
+      className={cn(
+        "group border-border/40 bg-card/40 backdrop-blur-sm overflow-hidden relative transition-all duration-300",
+        "hover:bg-card/60 hover:border-primary/30 hover:scale-[1.02] grid-bg-tactical",
+        onClick && "cursor-pointer",
+        isActive && [
+          "border-2",
+          activeBorderColors[highlight],
+          "bg-gradient-to-br from-card/60 to-card/40",
+          "shadow-lg",
+          activeGlowColors[highlight],
+          "scale-[1.02]",
+          "ring-2 ring-offset-1 ring-offset-background",
+          highlight === 'default' && "ring-primary/50",
+          highlight === 'destructive' && "ring-destructive/50",
+          highlight === 'success' && "ring-savanna/50",
+          highlight === 'warning' && "ring-sunset/50",
+        ],
+        pulse && !isActive && "animate-pulse"
+      )}>
+      {/* Tactical Scanner Effect */}
+      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="border-scan opacity-40" />
+      </div>
+
+      <CardContent className="p-4 relative z-10">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-              {label}
-            </p>
-            <div className="flex items-baseline gap-2 mt-1">
-              <h3 className={cn("text-2xl font-bold", highlightColors[highlight])}>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className={cn(
+                "text-[9px] font-mono leading-none transition-colors",
+                isActive ? "text-primary/70" : "text-primary/40",
+                pulse && !isActive && "text-destructive animate-pulse"
+              )}>
+                {isActive ? "FILTER://" : pulse ? "LIVE://" : "SYS://"}
+              </span>
+              <p className={cn(
+                "text-[10px] font-black uppercase tracking-[0.15em] truncate transition-colors",
+                isActive ? "text-foreground" : "text-muted-foreground"
+              )}>
+                {label}
+              </p>
+            </div>
+
+            <div className="flex items-baseline gap-2 mt-2">
+              <h3 className={cn("text-3xl font-black tracking-tighter", highlightColors[highlight])}>
                 {value.toLocaleString()}
               </h3>
               {trend !== undefined && trend !== 0 && (
                 <span className={cn(
-                  'flex items-center text-[10px] font-semibold',
+                  'flex items-center text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-sm bg-background/50',
                   trend > 0 ? 'text-savanna' : 'text-destructive'
                 )}>
-                  {trend > 0 ? (
-                    <TrendingUp className="w-3 h-3 mr-0.5" />
-                  ) : (
-                    <TrendingDown className="w-3 h-3 mr-0.5" />
-                  )}
-                  {Math.abs(trend)}%
+                  {trend > 0 ? '+' : ''}{trend}%
                 </span>
               )}
             </div>
           </div>
+
           <div className={cn(
-            'p-2.5 rounded-lg',
+            'p-3 rounded-xl transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 shadow-lg',
             bgColors[highlight],
             highlightColors[highlight]
           )}>
             {icon}
           </div>
         </div>
+
+        {/* Decorative corner elements */}
+        <div className={cn(
+          "absolute bottom-0 right-0 w-4 h-4 p-1 transition-opacity",
+          isActive ? "opacity-60" : "opacity-20 group-hover:opacity-60"
+        )}>
+          <div className={cn(
+            "w-full h-full border-b border-r",
+            isActive ? highlightColors[highlight] : "border-primary"
+          )} />
+        </div>
+
+        {/* Active filter indicator */}
+        {isActive && (
+          <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-current to-transparent opacity-60" />
+        )}
       </CardContent>
+
+      {/* Data glimmer effect */}
+      <div className={cn(
+        "absolute inset-0 data-glimmer transition-opacity",
+        isActive ? "opacity-30" : "opacity-0 group-hover:opacity-100"
+      )} />
     </Card>
   );
 }
 
-export function ExecutiveCards() {
+interface ExecutiveCardsProps {
+  activeFilter?: string;
+  onFilterChange?: (filter: string) => void;
+}
+
+export function ExecutiveCards({ activeFilter, onFilterChange }: ExecutiveCardsProps) {
   const { data: stats, isLoading } = useSignalStats();
-   const { data: trends } = useSignalTrends();
+  const { data: trends } = useSignalTrends();
 
   const p1Count = stats?.byPriority?.P1 || 0;
 
@@ -108,9 +184,11 @@ export function ExecutiveCards() {
         label="Active Signals"
         value={stats?.total || 0}
         icon={<Radio className="w-5 h-5" />}
-         trend={trends?.trendPercent}
+        trend={trends?.trendPercent}
         highlight="default"
         isLoading={isLoading}
+        onClick={() => onFilterChange?.('all')}
+        isActive={activeFilter === 'all'}
       />
       <ExecutiveCard
         label="Critical (P1)"
@@ -119,6 +197,8 @@ export function ExecutiveCards() {
         highlight="destructive"
         pulse={p1Count > 0}
         isLoading={isLoading}
+        onClick={() => onFilterChange?.('P1')}
+        isActive={activeFilter === 'P1'}
       />
       <ExecutiveCard
         label="Validated"
@@ -126,6 +206,8 @@ export function ExecutiveCards() {
         icon={<ShieldCheck className="w-5 h-5" />}
         highlight="success"
         isLoading={isLoading}
+        onClick={() => onFilterChange?.('validated')}
+        isActive={activeFilter === 'validated'}
       />
       <ExecutiveCard
         label="Awaiting Triage"
@@ -133,6 +215,8 @@ export function ExecutiveCards() {
         icon={<Clock className="w-5 h-5" />}
         highlight="warning"
         isLoading={isLoading}
+        onClick={() => onFilterChange?.('new')}
+        isActive={activeFilter === 'new'}
       />
     </div>
   );
