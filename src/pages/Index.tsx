@@ -4,6 +4,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { ExecutiveCards } from '@/components/dashboard/ExecutiveCards';
 import { IntelligenceInsights } from '@/components/dashboard/IntelligenceInsights';
 import { LiveIntelligenceFeed } from '@/components/dashboard/LiveIntelligenceFeed';
+ import { AutoTriagePanel } from '@/components/dashboard/AutoTriagePanel';
 import { SignalModal } from '@/components/signals/SignalModal';
 import { AfricaMap } from '@/components/map/AfricaMap';
 import { AutoDetectionPopup } from '@/components/alerts/AutoDetectionPopup';
@@ -199,6 +200,11 @@ const Index = () => {
 
                 {/* C. Intelligence Insights - Bottom */}
                 <IntelligenceInsights signals={filteredSignals} />
+               
+               {/* D. AI Triage Control Panel - Visible to analysts/admins */}
+               {(isAdmin || isAnalyst) && (
+                 <AutoTriagePanel />
+               )}
               </div>
             </ScrollArea>
 

@@ -1,4 +1,4 @@
-import { useSignalStats } from '@/hooks/useSignals';
+ import { useSignalStats, useSignalTrends } from '@/hooks/useSignals';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Radio, AlertTriangle, ShieldCheck, Clock, TrendingUp, TrendingDown } from 'lucide-react';
@@ -98,6 +98,7 @@ function ExecutiveCard({
 
 export function ExecutiveCards() {
   const { data: stats, isLoading } = useSignalStats();
+   const { data: trends } = useSignalTrends();
 
   const p1Count = stats?.byPriority?.P1 || 0;
 
@@ -107,7 +108,7 @@ export function ExecutiveCards() {
         label="Active Signals"
         value={stats?.total || 0}
         icon={<Radio className="w-5 h-5" />}
-        trend={12}
+         trend={trends?.trendPercent}
         highlight="default"
         isLoading={isLoading}
       />
@@ -123,7 +124,6 @@ export function ExecutiveCards() {
         label="Validated"
         value={stats?.byStatus?.validated || 0}
         icon={<ShieldCheck className="w-5 h-5" />}
-        trend={8}
         highlight="success"
         isLoading={isLoading}
       />
