@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.lingua-fidelity]
 verify_jwt = false
+ 
+ [functions.auto-triage]
+ verify_jwt = false
+ 
+ [functions.sync-to-azure]
+ verify_jwt = false

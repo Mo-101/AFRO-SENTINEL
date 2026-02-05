@@ -333,6 +333,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_signal_24h_trend: {
+        Args: never
+        Returns: {
+          current_count: number
+          previous_count: number
+          trend_percent: number
+        }[]
+      }
+      get_signal_priority_counts: {
+        Args: never
+        Returns: {
+          count: number
+          priority: string
+        }[]
+      }
+      get_signal_status_counts: {
+        Args: never
+        Returns: {
+          count: number
+          status: string
+        }[]
+      }
+      get_signal_total_count: { Args: never; Returns: number }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

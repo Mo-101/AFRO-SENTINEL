@@ -124,44 +124,59 @@ export function useUpdateSignal() {
   });
 }
 
+ // Use RPC functions for accurate counts (bypass 1000-row limit)
 export function useSignalStats() {
   return useQuery({
     queryKey: ['signal-stats'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('signals')
-        .select('priority, status, disease_category, location_country');
-
-      if (error) {
-        throw error;
-      }
-
-      const stats = {
-        total: data.length,
-        byPriority: {
-          P1: data.filter(s => s.priority === 'P1').length,
-          P2: data.filter(s => s.priority === 'P2').length,
-          P3: data.filter(s => s.priority === 'P3').length,
-          P4: data.filter(s => s.priority === 'P4').length,
-        },
-        byStatus: {
-          new: data.filter(s => s.status === 'new').length,
-          triaged: data.filter(s => s.status === 'triaged').length,
-          validated: data.filter(s => s.status === 'validated').length,
-          dismissed: data.filter(s => s.status === 'dismissed').length,
-        },
-        byCategory: data.reduce((acc, s) => {
-          const cat = s.disease_category || 'unknown';
-          acc[cat] = (acc[cat] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>),
-        byCountry: data.reduce((acc, s) => {
-          acc[s.location_country] = (acc[s.location_country] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>),
-      };
-
-      return stats;
+       // Use RPC functions for server-side aggregation (bypasses 1000-row limit)
+       const [priorityRes, statusRes, totalRes] = await Promise.all([
+         supabase.rpc('get_signal_priority_counts'),
+         supabase.rpc('get_signal_status_counts'),
+         supabase.rpc('get_signal_total_count'),
+       ]);
+ 
+       if (priorityRes.error) throw priorityRes.error;
+       if (statusRes.error) throw statusRes.error;
+       if (totalRes.error) throw totalRes.error;
+ 
+       // Convert arrays to objects
+       const byPriority: Record<string, number> = { P1: 0, P2: 0, P3: 0, P4: 0 };
+       (priorityRes.data || []).forEach((row: { priority: string; count: number }) => {
+         byPriority[row.priority] = Number(row.count);
+       });
+ 
+       const byStatus: Record<string, number> = { new: 0, triaged: 0, validated: 0, dismissed: 0 };
+       (statusRes.data || []).forEach((row: { status: string; count: number }) => {
+         byStatus[row.status] = Number(row.count);
+       });
+ 
+       return {
+         total: Number(totalRes.data) || 0,
+         byPriority,
+         byStatus,
+       };
     },
   });
 }
+ 
+ // Get real 24h trend data
+ export function useSignalTrends() {
+   return useQuery({
+     queryKey: ['signal-trends'],
+     queryFn: async () => {
+       const { data, error } = await supabase.rpc('get_signal_24h_trend');
+ 
+       if (error) throw error;
+ 
+       // RPC returns a single row
+       const row = Array.isArray(data) ? data[0] : data;
+       
+       return {
+         currentCount: Number(row?.current_count) || 0,
+         previousCount: Number(row?.previous_count) || 0,
+         trendPercent: Number(row?.trend_percent) || 0,
+       };
+     },
+   });
+ }
