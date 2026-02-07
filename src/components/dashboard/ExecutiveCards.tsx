@@ -176,19 +176,22 @@ export function ExecutiveCards({ activeFilter, onFilterChange }: ExecutiveCardsP
   const { data: stats, isLoading } = useSignalStats();
   const { data: trends } = useSignalTrends();
 
+  const validatedCount = stats?.byStatus?.validated || 0;
   const p1Count = stats?.byPriority?.P1 || 0;
+  const pendingCount = stats?.byStatus?.new || 0;
+  const dismissedCount = stats?.byStatus?.dismissed || 0;
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <ExecutiveCard
-        label="Active Signals"
-        value={stats?.total || 0}
-        icon={<Radio className="w-5 h-5" />}
+        label="Confirmed Threats"
+        value={validatedCount}
+        icon={<ShieldCheck className="w-5 h-5" />}
         trend={trends?.trendPercent}
-        highlight="default"
+        highlight="success"
         isLoading={isLoading}
-        onClick={() => onFilterChange?.('all')}
-        isActive={activeFilter === 'all'}
+        onClick={() => onFilterChange?.('validated')}
+        isActive={activeFilter === 'validated'}
       />
       <ExecutiveCard
         label="Critical (P1)"
@@ -201,22 +204,22 @@ export function ExecutiveCards({ activeFilter, onFilterChange }: ExecutiveCardsP
         isActive={activeFilter === 'P1'}
       />
       <ExecutiveCard
-        label="Validated"
-        value={stats?.byStatus?.validated || 0}
-        icon={<ShieldCheck className="w-5 h-5" />}
-        highlight="success"
-        isLoading={isLoading}
-        onClick={() => onFilterChange?.('validated')}
-        isActive={activeFilter === 'validated'}
-      />
-      <ExecutiveCard
-        label="Awaiting Triage"
-        value={stats?.byStatus?.new || 0}
+        label="Pending Triage"
+        value={pendingCount}
         icon={<Clock className="w-5 h-5" />}
         highlight="warning"
         isLoading={isLoading}
         onClick={() => onFilterChange?.('new')}
         isActive={activeFilter === 'new'}
+      />
+      <ExecutiveCard
+        label="Total Ingested"
+        value={stats?.total || 0}
+        icon={<Radio className="w-5 h-5" />}
+        highlight="default"
+        isLoading={isLoading}
+        onClick={() => onFilterChange?.('all')}
+        isActive={activeFilter === 'all'}
       />
     </div>
   );
