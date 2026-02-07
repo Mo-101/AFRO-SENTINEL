@@ -9,7 +9,7 @@ export type SignalUpdate = TablesUpdate<'signals'>;
 type SignalPriority = 'P1' | 'P2' | 'P3' | 'P4';
 type SignalStatus = 'new' | 'triaged' | 'validated' | 'dismissed';
 
-interface UseSignalsOptions {
+export interface UseSignalsOptions {
   priority?: SignalPriority[];
   status?: SignalStatus[];
   country?: string;

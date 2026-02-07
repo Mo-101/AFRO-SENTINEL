@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { useLiveSignalFeed } from '@/hooks/useLiveSignalFeed';
-import { useSignalStats } from '@/hooks/useSignals';
+import { useSignalStats, useSignals } from '@/hooks/useSignals';
 import { Signal } from '@/hooks/useSignals';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
@@ -464,6 +464,20 @@ export function LiveIntelligenceFeed({ onSignalClick, activeFilter }: LiveIntell
   const [isPaused, setIsPaused] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // When a specific filter is active (validated, P1, new), fetch those signals directly from DB
+  const filterQuery = useMemo(() => {
+    if (!activeFilter || activeFilter === 'all') return {};
+    if (activeFilter === 'P1') return { priority: ['P1' as const], limit: 50 };
+    if (activeFilter === 'validated') return { status: ['validated' as const], limit: 50 };
+    if (activeFilter === 'new') return { status: ['new' as const], limit: 50 };
+    return {};
+  }, [activeFilter]);
+
+  const isFiltered = activeFilter && activeFilter !== 'all';
+  const { data: filteredFromDB, isLoading: filterLoading } = useSignals(
+    isFiltered ? filterQuery : { limit: 0 }
+  );
+
   // Calculate compact stats based on current filter context
   const displayStats = useMemo(() => {
     if (!stats) return { p1: 0, new: 0, validated: 0, total: 0 };
@@ -475,25 +489,11 @@ export function LiveIntelligenceFeed({ onSignalClick, activeFilter }: LiveIntell
     };
   }, [stats]);
 
-  // Apply active filter to live signals
-  const filteredSignals = useMemo(() => {
-    if (!activeFilter || activeFilter === 'all') return liveSignals;
-
-    return liveSignals.filter(signal => {
-      if (activeFilter === 'P1') return signal.priority === 'P1';
-      if (activeFilter === 'validated') return signal.status === 'validated';
-      if (activeFilter === 'new') return signal.status === 'new';
-      return true;
-    });
-  }, [liveSignals, activeFilter]);
-
-  // Ensure feed is never empty
+  // Use DB query for filtered view, live feed for unfiltered
   const displaySignals = useMemo(() => {
-    if (filteredSignals.length === 0 && !isLoading) {
-      return [];
-    }
-    return filteredSignals;
-  }, [filteredSignals, isLoading]);
+    if (isFiltered) return filteredFromDB || [];
+    return liveSignals;
+  }, [isFiltered, filteredFromDB, liveSignals]);
 
   // Auto-scroll to top when new signals arrive (if not paused)
   useEffect(() => {

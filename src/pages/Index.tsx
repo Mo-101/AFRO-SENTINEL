@@ -9,7 +9,7 @@ import { SignalModal } from '@/components/signals/SignalModal';
 import { AfricaMap } from '@/components/map/AfricaMap';
 import { AutoDetectionPopup } from '@/components/alerts/AutoDetectionPopup';
 import { useAuth } from '@/hooks/useAuth';
-import { useSignals, Signal } from '@/hooks/useSignals';
+import { useSignals, Signal, type UseSignalsOptions } from '@/hooks/useSignals';
 import { useRealtimeAlerts } from '@/hooks/useRealtimeAlerts';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -37,17 +37,16 @@ const Index = () => {
   const { alerts, dismissAlert, injectTestAlert } = useRealtimeAlerts({ enabled: !!user, playSound: true });
 
   // Fetch signals with active filter
-  const signalFilters = useMemo(() => {
-    const filters: { limit: number; priority?: string[]; status?: string[] } = { limit: 100 };
+  const signalFilters = useMemo((): UseSignalsOptions => {
+    const filters: UseSignalsOptions = { limit: 100 };
 
     if (activeFilter === 'P1') {
-      filters.priority = ['P1'];
+      filters.priority = ['P1'] as const;
     } else if (activeFilter === 'validated') {
-      filters.status = ['validated'];
+      filters.status = ['validated'] as const;
     } else if (activeFilter === 'new') {
-      filters.status = ['new'];
+      filters.status = ['new'] as const;
     }
-    // 'all' = no additional filters
 
     return filters;
   }, [activeFilter]);
