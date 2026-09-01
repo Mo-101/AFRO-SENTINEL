@@ -203,8 +203,8 @@ export function AuthPage() {
                 Development Test Credentials
               </p>
               <div className="space-y-1 text-xs font-mono">
-                <p><span className="text-muted-foreground">Email:</span> admin@afrosentinel.test</p>
-                <p><span className="text-muted-foreground">Pass:</span> Admin123!</p>
+                <p><span className="text-muted-foreground">Email:</span> test@afrosentinel.dev</p>
+                <p><span className="text-muted-foreground">Pass:</span> TestPass123</p>
               </div>
               <Button
                 type="button"
@@ -212,8 +212,8 @@ export function AuthPage() {
                 size="sm"
                 className="w-full mt-2 text-xs h-7"
                 onClick={() => {
-                  form.setValue('email', 'admin@afrosentinel.test');
-                  form.setValue('password', 'Admin123!');
+                  form.setValue('email', 'test@afrosentinel.dev');
+                  form.setValue('password', 'TestPass123');
                 }}
               >
                 Auto-fill credentials
