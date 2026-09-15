@@ -198,26 +198,59 @@ export function AuthPage() {
 
             {/* Test Credentials - Remove before production */}
             <div className="mt-6 p-3 rounded-lg bg-muted/50 border border-dashed border-amber-500/50">
-              <p className="text-xs font-medium text-amber-600 dark:text-amber-400 mb-2 flex items-center gap-1">
-                <span className="inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                Development Test Credentials
+              <p className="text-xs font-medium text-amber-600 dark:text-amber-400 mb-2 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  Development Test Credentials
+                </span>
+                <span className="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded font-mono">ADMIN</span>
               </p>
-              <div className="space-y-1 text-xs font-mono">
+              <div className="space-y-1 text-xs font-mono mb-3">
                 <p><span className="text-muted-foreground">Email:</span> test@afrosentinel.dev</p>
                 <p><span className="text-muted-foreground">Pass:</span> TestPass123</p>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="w-full mt-2 text-xs h-7"
-                onClick={() => {
-                  form.setValue('email', 'test@afrosentinel.dev');
-                  form.setValue('password', 'TestPass123');
-                }}
-              >
-                Auto-fill credentials
-              </Button>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-xs h-8"
+                  disabled={loading}
+                  onClick={() => {
+                    form.setValue('email', 'test@afrosentinel.dev');
+                    form.setValue('password', 'TestPass123');
+                    setError(null);
+                  }}
+                >
+                  Auto-fill
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="w-full text-xs h-8 bg-amber-600 hover:bg-amber-700 text-white font-medium shadow-sm"
+                  disabled={loading}
+                  onClick={async () => {
+                    setError(null);
+                    setLoading(true);
+                    form.setValue('email', 'test@afrosentinel.dev');
+                    form.setValue('password', 'TestPass123');
+                    try {
+                      const { error } = await signIn('test@afrosentinel.dev', 'TestPass123');
+                      if (error) {
+                        setError(error.message);
+                      } else {
+                        navigate('/');
+                      }
+                    } catch (err) {
+                      setError('Failed to log in with test account.');
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                >
+                  {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Instant Login'}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

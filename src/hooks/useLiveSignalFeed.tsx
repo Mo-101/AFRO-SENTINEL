@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Signal } from '@/hooks/useSignals';
+import { DEMO_SIGNALS } from '@/lib/mockSignals';
 
 const MAX_FEED_SIZE = 50;
 const NEW_SIGNAL_ANIMATION_DURATION = 2500; // ms
@@ -30,9 +31,14 @@ export function useLiveSignalFeed() {
         .limit(MAX_FEED_SIZE);
 
       if (error) throw error;
-      setLiveSignals(data || []);
+      if (data && data.length > 0) {
+        setLiveSignals(data);
+      } else {
+        setLiveSignals(DEMO_SIGNALS);
+      }
     } catch (err) {
-      console.error('Failed to fetch signals:', err);
+      console.warn('Live feed falling back to demo signals:', err);
+      setLiveSignals(DEMO_SIGNALS);
     } finally {
       setIsLoading(false);
     }
