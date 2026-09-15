@@ -1,40 +1,6 @@
 import type { Signal } from '@/hooks/useSignals';
 import { AFRO_COUNTRIES } from '@/lib/constants';
 
-const NEON_AUTH_URL =
-  import.meta.env.VITE_NEON_AUTH_URL ||
-  'postgresql://neondb_owner:npg_i35UjNDvaZoh@ep-restless-salad-ad9c8chi-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
-
-// Derive Neon serverless SQL endpoint from connection URL
-function getNeonSqlEndpoint(): string {
-  try {
-    const url = new URL(NEON_AUTH_URL.replace(/^postgresql:\/\//, 'http://'));
-    return `https://${url.hostname}/sql`;
-  } catch {
-    return 'https://ep-restless-salad-ad9c8chi-pooler.c-2.us-east-1.aws.neon.tech/sql';
-  }
-}
-
-export async function queryNeon<T = any>(sql: string): Promise<T[]> {
-  const endpoint = getNeonSqlEndpoint();
-  const res = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'neon-connection-string': NEON_AUTH_URL,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ query: sql }),
-  });
-
-  if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(`Neon SQL error (${res.status}): ${errorText}`);
-  }
-
-  const data = await res.json();
-  return (data.rows || []) as T[];
-}
-
 function categorizeDisease(
   disease: string
 ): 'vhf' | 'respiratory' | 'enteric' | 'vector_borne' | 'zoonotic' | 'vaccine_preventable' | 'environmental' | 'unknown' {
@@ -96,7 +62,7 @@ export function mapWhoEventToSignal(row: any): Signal {
     disease_name: disease,
     disease_category: categorizeDisease(disease),
     location_country: country,
-    location_country_iso: getCountryIso(country),
+    location_country_iso: row.location_country_iso || getCountryIso(country),
     location_admin1: null,
     location_admin2: null,
     location_locality: null,
@@ -143,63 +109,39 @@ export async function fetchNeonSignals(options: {
   disease?: string;
   limit?: number;
 } = {}): Promise<Signal[]> {
-  const { priority, status, country, disease, limit = 50 } = options;
-  const whereClauses: string[] = [];
+  const params = new URLSearchParams();
+  if (options.limit) params.set('limit', String(options.limit));
+  if (options.priority && options.priority.length > 0) params.set('priority', options.priority.join(','));
+  if (options.status && options.status.length > 0) params.set('status', options.status.join(','));
+  if (options.country) params.set('country', options.country);
+  if (options.disease) params.set('disease', options.disease);
 
-  if (priority && priority.length > 0) {
-    const gradeMap: Record<string, string> = {
-      P1: 'Grade 3',
-      P2: 'Grade 2',
-      P3: 'Grade 1',
-      P4: 'Ungraded',
-    };
-    const grades = priority.map(p => `'${gradeMap[p]}'`).join(',');
-    whereClauses.push(`grade IN (${grades})`);
+  const queryStr = params.toString();
+  const url = `/api/signals${queryStr ? `?${queryStr}` : ''}`;
+
+  const res = await fetch(url);
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Signals API error (${res.status}): ${errorText}`);
   }
 
-  if (status && status.length > 0) {
-    const statusMap: Record<string, string> = {
-      new: 'New',
-      validated: 'Ongoing',
-      triaged: 'Monitoring',
-      dismissed: 'Closed',
-    };
-    const statuses = status.map(s => `'${statusMap[s]}'`).join(',');
-    whereClauses.push(`status IN (${statuses})`);
-  }
-
-  if (country) {
-    whereClauses.push(`LOWER(country) LIKE '%${country.toLowerCase().replace(/'/g, "''")}%'`);
-  }
-
-  if (disease) {
-    whereClauses.push(`LOWER(disease) LIKE '%${disease.toLowerCase().replace(/'/g, "''")}%'`);
-  }
-
-  const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
-  const sql = `
-    SELECT id, event_id, country, disease, grade, event_type, status, report_date, year, description, cases, deaths, latitude, longitude, created_at, updated_at
-    FROM who_events
-    ${whereSql}
-    ORDER BY id DESC
-    LIMIT ${limit};
-  `;
-
-  const rows = await queryNeon(sql);
-  return rows.map(mapWhoEventToSignal);
+  const data = await res.json();
+  return (data || []).map((s: any) => ({
+    ...s,
+    location_country_iso: s.location_country_iso || getCountryIso(s.location_country),
+  }));
 }
 
 export async function fetchNeonSignalById(id: string): Promise<Signal | null> {
-  const cleanId = id.replace(/^who-/, '');
-  const sql = `
-    SELECT id, event_id, country, disease, grade, event_type, status, report_date, year, description, cases, deaths, latitude, longitude, created_at, updated_at
-    FROM who_events
-    WHERE id = ${parseInt(cleanId, 10) || 0} OR event_id = '${id.replace(/'/g, "''")}'
-    LIMIT 1;
-  `;
-  const rows = await queryNeon(sql);
-  if (!rows || rows.length === 0) return null;
-  return mapWhoEventToSignal(rows[0]);
+  const res = await fetch(`/api/signals?id=${encodeURIComponent(id)}&limit=1`);
+  if (!res.ok) return null;
+  const data = await res.json();
+  if (!data || data.length === 0) return null;
+  const s = data[0];
+  return {
+    ...s,
+    location_country_iso: s.location_country_iso || getCountryIso(s.location_country),
+  };
 }
 
 export async function fetchNeonSignalStats(): Promise<{
@@ -207,38 +149,11 @@ export async function fetchNeonSignalStats(): Promise<{
   byPriority: Record<string, number>;
   byStatus: Record<string, number>;
 }> {
-  const sql = `
-    SELECT
-      COUNT(*) as total,
-      COUNT(*) FILTER (WHERE grade = 'Grade 3') as p1,
-      COUNT(*) FILTER (WHERE grade = 'Grade 2') as p2,
-      COUNT(*) FILTER (WHERE grade = 'Grade 1') as p3,
-      COUNT(*) FILTER (WHERE grade = 'Ungraded' OR grade IS NULL) as p4,
-      COUNT(*) FILTER (WHERE LOWER(status) = 'new') as status_new,
-      COUNT(*) FILTER (WHERE LOWER(status) = 'ongoing') as status_validated,
-      COUNT(*) FILTER (WHERE LOWER(status) = 'monitoring') as status_triaged,
-      COUNT(*) FILTER (WHERE LOWER(status) = 'closed') as status_dismissed
-    FROM who_events;
-  `;
-
-  const rows = await queryNeon(sql);
-  const row = rows[0] || {};
-
-  return {
-    total: Number(row.total) || 0,
-    byPriority: {
-      P1: Number(row.p1) || 0,
-      P2: Number(row.p2) || 0,
-      P3: Number(row.p3) || 0,
-      P4: Number(row.p4) || 0,
-    },
-    byStatus: {
-      new: Number(row.status_new) || 0,
-      triaged: Number(row.status_triaged) || 0,
-      validated: Number(row.status_validated) || 0,
-      dismissed: Number(row.status_dismissed) || 0,
-    },
-  };
+  const res = await fetch('/api/stats');
+  if (!res.ok) {
+    throw new Error(`Stats API error (${res.status}): ${await res.text()}`);
+  }
+  return await res.json();
 }
 
 export async function fetchNeonSignalTrends(): Promise<{
@@ -246,30 +161,13 @@ export async function fetchNeonSignalTrends(): Promise<{
   previousCount: number;
   trendPercent: number;
 }> {
-  const sql = `
-    SELECT
-      COUNT(*) FILTER (WHERE year = 2017) as current_count,
-      COUNT(*) FILTER (WHERE year = 2016) as prev_count
-    FROM who_events;
-  `;
-
-  try {
-    const rows = await queryNeon(sql);
-    const row = rows[0] || {};
-    const current = Number(row.current_count) || 240;
-    const prev = Number(row.prev_count) || 210;
-    const trend = prev > 0 ? Math.round(((current - prev) / prev) * 100) : 14;
-
-    return {
-      currentCount: current,
-      previousCount: prev,
-      trendPercent: trend,
-    };
-  } catch {
+  const res = await fetch('/api/trends');
+  if (!res.ok) {
     return {
       currentCount: 228,
       previousCount: 204,
       trendPercent: 12,
     };
   }
+  return await res.json();
 }
